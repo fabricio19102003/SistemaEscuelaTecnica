@@ -1,31 +1,173 @@
 import type { Request, Response } from 'express';
 import prisma from '../utils/prisma.js';
 import type { Prisma } from '@prisma/client';
+import { uploadToCloudinary } from '../utils/file-upload.js';
 
 // ==========================================
 // COURSES
 // ==========================================
 
-export const createCourse = async (req: Request, res: Response) => {
-    const { name, code, description, minAge, maxAge, durationMonths, imageUrl } = req.body;
+// Helper to generate next code
+const generateCourseCode = async () => {
+    const count = await prisma.course.count();
+    const nextId = count + 1;
+    return `CUR-${nextId.toString().padStart(3, '0')}`;
+};
 
+export const createCourse = async (req: Request, res: Response) => {
     try {
+        let bodyData = req.body;
+        if (req.body.data && typeof req.body.data === 'string') {
+            try {
+                bodyData = JSON.parse(req.body.data);
+            } catch (e) {
+                return res.status(400).json({ message: 'Invalid JSON data' });
+            }
+        }
+
+        const { name, description, durationMonths, teacherId, classroomId, schedules } = bodyData;
+
+        let imageUrl = bodyData.imageUrl;
+        if (req.file) {
+            imageUrl = await uploadToCloudinary(req.file.buffer, 'courses');
+        }
+
+        // Auto-generate code
+        let code = await generateCourseCode();
+        // Simple check to ensure uniqueness if using count (race condition possible but unlikely in low traffic)
+        const exists = await prisma.course.findUnique({ where: { code } });
+        if (exists) {
+            code = `CUR-${Date.now().toString().slice(-4)}`;
+        }
+
         const newCourse = await prisma.course.create({
             data: {
                 name,
                 code,
                 description,
-                minAge: Number(minAge),
-                maxAge: Number(maxAge),
                 durationMonths: durationMonths ? Number(durationMonths) : null,
                 imageUrl,
-                isActive: true
+                isActive: true,
+                teacherId: teacherId ? Number(teacherId) : null,
+                classroomId: classroomId ? Number(classroomId) : null,
+                schedules: {
+                    create: schedules?.map((s: any) => ({
+                        dayOfWeek: s.dayOfWeek,
+                        startTime: new Date(`1970-01-01T${s.startTime}:00Z`), // Ensure correct format
+                        endTime: new Date(`1970-01-01T${s.endTime}:00Z`)
+                    }))
+                }
+            },
+            include: {
+                schedules: true
             }
         });
         res.status(201).json(newCourse);
     } catch (error: any) {
         console.error('Error creating course:', error);
         res.status(400).json({ message: 'Error creating course' });
+    }
+};
+
+export const getCourseById = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const course = await prisma.course.findUnique({
+            where: { id: Number(id) },
+            include: {
+                levels: {
+                    where: { isActive: true },
+                    orderBy: { orderIndex: 'asc' }
+                },
+                teacher: {
+                    include: { user: { select: { firstName: true, paternalSurname: true, maternalSurname: true } } }
+                },
+                classroom: true,
+                schedules: true
+            }
+        });
+
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
+
+        res.json(course);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching course' });
+    }
+};
+
+export const updateCourse = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        let bodyData = req.body;
+        if (req.body.data && typeof req.body.data === 'string') {
+            try {
+                bodyData = JSON.parse(req.body.data);
+            } catch (e) {
+                return res.status(400).json({ message: 'Invalid JSON data' });
+            }
+        }
+
+        const { name, description, durationMonths, isActive, teacherId, classroomId, schedules } = bodyData;
+
+        const updateData: Prisma.CourseUpdateInput = {
+            ...(name && { name }),
+            // Code is usually not editable if auto-generated, but if needed, can add check. Assuming not for now.
+            ...(description && { description }),
+            ...(durationMonths !== undefined && { durationMonths: durationMonths ? Number(durationMonths) : null }),
+            ...(isActive !== undefined && { isActive: Boolean(isActive) }),
+            ...(teacherId !== undefined && { teacher: teacherId ? { connect: { id: Number(teacherId) } } : { disconnect: true } }),
+            ...(classroomId !== undefined && { classroom: classroomId ? { connect: { id: Number(classroomId) } } : { disconnect: true } }),
+        };
+
+        if (req.file) {
+            updateData.imageUrl = await uploadToCloudinary(req.file.buffer, 'courses');
+        }
+
+        // Transaction to handle schedules update
+        const updatedCourse = await prisma.$transaction(async (tx) => {
+            if (schedules) {
+                // Remove old schedules
+                await tx.schedule.deleteMany({ where: { courseId: Number(id) } });
+                // Add new ones
+                if (Array.isArray(schedules) && schedules.length > 0) {
+                    await tx.schedule.createMany({
+                        data: schedules.map((s: any) => ({
+                            courseId: Number(id),
+                            dayOfWeek: s.dayOfWeek,
+                            startTime: new Date(`1970-01-01T${s.startTime}:00Z`),
+                            endTime: new Date(`1970-01-01T${s.endTime}:00Z`)
+                        }))
+                    });
+                }
+            }
+
+            return await tx.course.update({
+                where: { id: Number(id) },
+                data: updateData,
+                include: { schedules: true }
+            });
+        });
+
+        res.json(updatedCourse);
+    } catch (error: any) {
+        console.error('Error updating course:', error);
+        res.status(400).json({ message: 'Error updating course' });
+    }
+};
+
+export const deleteCourse = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        // Soft delete
+        const deletedCourse = await prisma.course.update({
+            where: { id: Number(id) },
+            data: { isActive: false }
+        });
+        res.json({ message: 'Course deleted successfully', course: deletedCourse });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting course' });
     }
 };
 
@@ -36,7 +178,12 @@ export const getCourses = async (req: Request, res: Response) => {
                 levels: {
                     where: { isActive: true },
                     orderBy: { orderIndex: 'asc' }
-                }
+                },
+                teacher: {
+                    include: { user: { select: { firstName: true, paternalSurname: true, maternalSurname: true } } }
+                },
+                classroom: true,
+                schedules: true
             },
             where: { isActive: true }
         });
@@ -158,7 +305,7 @@ export const getGroups = async (req: Request, res: Response) => {
                 teacher: {
                     include: {
                         user: {
-                            select: { firstName: true, lastName: true }
+                            select: { firstName: true, paternalSurname: true }
                         }
                     }
                 },

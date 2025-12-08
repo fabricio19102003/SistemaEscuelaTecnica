@@ -70,9 +70,9 @@ export const createTeacher = async (req: Request, res: Response) => {
                 data: {
                     email,
                     passwordHash: hashedPassword,
-                    firstName,
-                    paternalSurname,
-                    maternalSurname,
+                    firstName: firstName.toUpperCase(),
+                    paternalSurname: paternalSurname.toUpperCase(),
+                    maternalSurname: maternalSurname?.toUpperCase(),
                     phone,
                     profileImageUrl,
                     isActive: true,
@@ -93,7 +93,7 @@ export const createTeacher = async (req: Request, res: Response) => {
                     userId: newUser.id,
                     documentType: documentType as any,
                     documentNumber,
-                    specialization,
+                    specialization: specialization?.toUpperCase(),
                     hireDate: parsedHireDate,
                     contractType: contractType as any,
                     hourlyRate: hourlyRate ? new Prisma.Decimal(hourlyRate) : null,
@@ -202,7 +202,7 @@ export const updateTeacher = async (req: Request, res: Response) => {
         const result = await prisma.$transaction(async (tx) => {
             // Update Teacher Profile
             const teacherUpdateData: Prisma.TeacherUpdateInput = {};
-            if (specialization !== undefined) teacherUpdateData.specialization = specialization;
+            if (specialization !== undefined) teacherUpdateData.specialization = specialization.toUpperCase();
             if (hireDate !== undefined) teacherUpdateData.hireDate = new Date(hireDate);
             if (contractType !== undefined) teacherUpdateData.contractType = contractType as any;
             if (hourlyRate !== undefined) teacherUpdateData.hourlyRate = new Prisma.Decimal(hourlyRate);
@@ -233,9 +233,9 @@ export const updateTeacher = async (req: Request, res: Response) => {
 
             // Update User Profile
             const userUpdateDataToApply: Prisma.UserUpdateInput = { ...userUpdateData };
-            if (firstName !== undefined) userUpdateDataToApply.firstName = firstName;
-            if (paternalSurname !== undefined) userUpdateDataToApply.paternalSurname = paternalSurname;
-            if (maternalSurname !== undefined) userUpdateDataToApply.maternalSurname = maternalSurname;
+            if (firstName !== undefined) userUpdateDataToApply.firstName = firstName.toUpperCase();
+            if (paternalSurname !== undefined) userUpdateDataToApply.paternalSurname = paternalSurname.toUpperCase();
+            if (maternalSurname !== undefined) userUpdateDataToApply.maternalSurname = maternalSurname.toUpperCase();
             if (phone !== undefined) userUpdateDataToApply.phone = phone;
 
             if (Object.keys(userUpdateDataToApply).length > 0) {

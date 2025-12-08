@@ -9,7 +9,10 @@ import type { JSX } from 'react';
 import SchoolListPage from './pages/schools/SchoolListPage';
 import SchoolFormPage from './pages/schools/SchoolFormPage';
 import TeacherListPage from './pages/teachers/TeacherListPage';
+
 import TeacherFormPage from './pages/teachers/TeacherFormPage';
+import CourseListPage from './pages/courses/CourseListPage';
+import CourseFormPage from './pages/courses/CourseFormPage';
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -50,7 +53,10 @@ function App() {
                 <Route path="teachers" element={<TeacherListPage />} />
                 <Route path="teachers/new" element={<TeacherFormPage />} />
                 <Route path="teachers/:id/edit" element={<TeacherFormPage />} />
-                    <Route path="courses" element={<div>Course Management Page</div>} />
+                    
+                    <Route path="courses" element={<CourseListPage />} />
+                    <Route path="courses/new" element={<CourseFormPage />} />
+                    <Route path="courses/:id" element={<CourseFormPage />} />
                 </Route>
 
                 {/* Default Redirect */}

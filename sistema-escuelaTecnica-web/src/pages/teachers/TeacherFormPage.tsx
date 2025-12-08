@@ -191,8 +191,9 @@ const TeacherFormPage = () => {
                             <label className="text-sm font-medium text-slate-300">Nombre *</label>
                             <input
                                 {...register('firstName')}
+                                onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                placeholder="Ej. Juan"
+                                placeholder="Ej. JUAN"
                             />
                             {errors.firstName && <span className="text-red-400 text-xs">{errors.firstName.message}</span>}
                         </div>
@@ -200,8 +201,9 @@ const TeacherFormPage = () => {
                             <label className="text-sm font-medium text-slate-300">Apellido Paterno *</label>
                             <input
                                 {...register('paternalSurname')}
+                                onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                placeholder="Ej. Pérez"
+                                placeholder="Ej. PÉREZ"
                             />
                             {errors.paternalSurname && <span className="text-red-400 text-xs">{errors.paternalSurname.message}</span>}
                         </div>
@@ -209,8 +211,9 @@ const TeacherFormPage = () => {
                             <label className="text-sm font-medium text-slate-300">Apellido Materno</label>
                             <input
                                 {...register('maternalSurname')}
+                                onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                placeholder="Ej. López"
+                                placeholder="Ej. LÓPEZ"
                             />
                         </div>
                     </div>
@@ -269,8 +272,9 @@ const TeacherFormPage = () => {
                             <label className="text-sm font-medium text-slate-300">Especialidad *</label>
                             <input
                                 {...register('specialization')}
+                                onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                placeholder="Ej. Matemáticas, Física..."
+                                placeholder="Ej. MATEMÁTICAS, FÍSICA..."
                             />
                             {errors.specialization && <span className="text-red-400 text-xs">{errors.specialization.message}</span>}
                         </div>
