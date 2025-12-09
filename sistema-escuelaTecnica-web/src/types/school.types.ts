@@ -1,3 +1,5 @@
+import type { Agreement } from './agreement.types';
+
 export interface School {
     id: number;
     name: string;
@@ -16,6 +18,7 @@ export interface School {
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
+    agreement?: Agreement;
 }
 
 export interface CreateSchoolDTO {

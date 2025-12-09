@@ -41,6 +41,7 @@ model User {
   cashRegistersClosed     CashRegister[]            @relation("CashRegisterCloser")
   cashFlowsCreated        CashFlow[]
   notificationEmailLogs   NotificationEmailLog[]
+  enrollmentsCreated      Enrollment[]              @relation("EnrollmentCreator")
 
   @@index([email])
   @@index([isActive])
@@ -194,7 +195,7 @@ model Course {
   name           String    @db.VarChar(150)
   code           String    @unique @db.VarChar(20) // Now auto-generated
   description    String?   @db.Text
-  // minAge and maxAge removed
+
   durationMonths Int?      @map("duration_months")
   imageUrl       String?   @map("image_url") @db.VarChar(500)
   isActive       Boolean   @default(true) @map("is_active")
@@ -338,12 +339,16 @@ model Enrollment {
   reportCards ReportCard[]
   certificates Certificate[]
   invoices    Invoice[]
+  
+  createdById Int?            @map("created_by") @db.UnsignedInt
+  createdBy   User?           @relation("EnrollmentCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([studentId])
   @@index([groupId])
   @@index([status])
   @@index([enrollmentDate])
   @@index([agreementId])
+  @@index([createdById])
   @@map("enrollments")
 }
 
@@ -469,18 +474,21 @@ model School {
   createdAt     DateTime  @default(now()) @map("created_at") 
   updatedAt     DateTime  @updatedAt @map("updated_at") 
 
+  agreementId   Int?      @map("agreement_id") @db.UnsignedInt
+  
   // Relaciones
   students   Student[]
-  agreements Agreement[]
+  agreement  Agreement? @relation(fields: [agreementId], references: [id], onDelete: SetNull)
 
   @@index([code])
   @@index([isActive])
+  @@index([agreementId])
   @@map("schools")
 }
 
 model Agreement {
   id            Int          @id @default(autoincrement()) @db.UnsignedInt
-  schoolId      Int          @map("school_id") @db.UnsignedInt
+  name          String       @db.VarChar(150) // New field for Agreement Name
   agreementCode String       @unique @map("agreement_code") @db.VarChar(30)
   discountType  DiscountType @map("discount_type")
   discountValue Decimal      @map("discount_value") @db.Decimal(10, 2)
@@ -492,11 +500,10 @@ model Agreement {
   updatedAt     DateTime     @updatedAt @map("updated_at") 
 
   // Relaciones
-  school      School       @relation(fields: [schoolId], references: [id], onDelete: Restrict)
+  schools     School[]
   enrollments Enrollment[]
 
   @@index([agreementCode])
-  @@index([schoolId])
   @@index([isActive])
   @@index([startDate, endDate])
   @@map("agreements")
@@ -656,6 +663,34 @@ model NotificationEmailLog {
 }
 
 // ============================================
+// TEMPLATES DE HORARIOS
+// ============================================
+
+model ScheduleTemplate {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  items       ScheduleTemplateItem[]
+
+  @@map("schedule_templates")
+}
+
+model ScheduleTemplateItem {
+  id         Int              @id @default(autoincrement()) @db.UnsignedInt
+  templateId Int              @map("template_id") @db.UnsignedInt
+  dayOfWeek  DayOfWeek        @map("day_of_week")
+  startTime  DateTime         @map("start_time") @db.Time
+  endTime    DateTime         @map("end_time") @db.Time
+
+  template   ScheduleTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@map("schedule_template_items")
+}
+
+// ============================================
 // ENUMS
 // ============================================
 
@@ -784,3 +819,4 @@ enum NotificationStatus {
   FAILED
   BOUNCED
 }
+

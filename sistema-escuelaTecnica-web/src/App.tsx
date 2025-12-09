@@ -13,6 +13,12 @@ import TeacherListPage from './pages/teachers/TeacherListPage';
 import TeacherFormPage from './pages/teachers/TeacherFormPage';
 import CourseListPage from './pages/courses/CourseListPage';
 import CourseFormPage from './pages/courses/CourseFormPage';
+import GroupListPage from './pages/groups/GroupListPage';
+import GroupFormPage from './pages/groups/GroupFormPage';
+import AgreementListPage from './pages/agreements/AgreementListPage';
+import AgreementFormPage from './pages/agreements/AgreementFormPage';
+import EnrollmentListPage from './pages/enrollments/EnrollmentListPage';
+import EnrollmentFormPage from './pages/enrollments/EnrollmentFormPage';
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -57,6 +63,18 @@ function App() {
                     <Route path="courses" element={<CourseListPage />} />
                     <Route path="courses/new" element={<CourseFormPage />} />
                     <Route path="courses/:id" element={<CourseFormPage />} />
+                    
+                    <Route path="groups" element={<GroupListPage />} />
+                    <Route path="groups/new" element={<GroupFormPage />} />
+                    <Route path="groups/:id" element={<GroupFormPage />} />
+
+                    <Route path="agreements" element={<AgreementListPage />} />
+                    <Route path="agreements/new" element={<AgreementFormPage />} />
+
+                    <Route path="agreements/:id" element={<AgreementFormPage />} />
+
+                    <Route path="enrollments" element={<EnrollmentListPage />} />
+                    <Route path="enrollments/new" element={<EnrollmentFormPage />} />
                 </Route>
 
                 {/* Default Redirect */}

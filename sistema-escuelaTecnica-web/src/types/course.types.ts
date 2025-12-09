@@ -11,6 +11,7 @@ export interface Level {
     objectives?: string;
     requirements?: string;
     isActive: boolean;
+    course?: Course;
 }
 
 export interface Schedule {
@@ -27,15 +28,19 @@ export interface Course {
     name: string;
     code: string;
     description?: string;
-    // minAge: number; // REMOVED
-    // maxAge: number; // REMOVED
     durationMonths?: number;
     imageUrl?: string;
     isActive: boolean;
     levels?: Level[];
     teacherId?: number;
     classroomId?: number;
-    teacher?: any; // Start precise, can refine later
+    teacher?: {
+        user: {
+            firstName: string;
+            paternalSurname: string;
+            maternalSurname: string | null;
+        }
+    };
     classroom?: any;
     schedules?: Schedule[];
     createdAt?: string;

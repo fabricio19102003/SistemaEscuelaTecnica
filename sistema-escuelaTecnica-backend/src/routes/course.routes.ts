@@ -6,9 +6,7 @@ import {
     getCourseById,
     updateCourse,
     deleteCourse,
-    createLevel,
-    createGroup,
-    getGroups
+    createLevel
 } from '../controllers/course.controller.js';
 
 const router = Router();
@@ -23,8 +21,6 @@ router.delete('/courses/:id', deleteCourse);
 // Levels (Nested under courses usually, but here flat for simplicity in router definition, though logic requires courseId)
 router.post('/courses/:courseId/levels', createLevel);
 
-// Groups (Independent entity mostly)
-router.get('/groups', getGroups);
-router.post('/groups', createGroup);
+
 
 export default router;

@@ -1,3 +1,5 @@
+import type { School } from './school.types';
+
 export interface Student {
     id: number;
     userId: number;
@@ -9,6 +11,7 @@ export interface Student {
     address?: string;
     previousSchool?: string; // NEW
     schoolId?: number | null; // Database School ID
+    school?: School;
     enrollmentStatus: 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'DROPPED';
     enrollmentYear?: number; // Optional or derived
     user: {

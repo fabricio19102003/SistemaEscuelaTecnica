@@ -17,7 +17,10 @@ export const studentService = {
         return response.data;
     },
     update: async (id: string, data: UpdateStudentDTO | FormData): Promise<Student> => {
+        console.log('[SERVICE] Calling api.put /students/' + id);
+        console.log('[SERVICE] Data type:', data instanceof FormData ? 'FormData' : 'Object');
         const response = await api.put(`/students/${id}`, data);
+        console.log('[SERVICE] Response received:', response.status);
         return response.data;
     },
     delete: async (id: string): Promise<void> => {

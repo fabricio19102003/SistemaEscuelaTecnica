@@ -205,7 +205,13 @@ export const updateTeacher = async (req: Request, res: Response) => {
             if (specialization !== undefined) teacherUpdateData.specialization = specialization.toUpperCase();
             if (hireDate !== undefined) teacherUpdateData.hireDate = new Date(hireDate);
             if (contractType !== undefined) teacherUpdateData.contractType = contractType as any;
-            if (hourlyRate !== undefined) teacherUpdateData.hourlyRate = new Prisma.Decimal(hourlyRate);
+            if (hourlyRate !== undefined) {
+                if (hourlyRate === null || (typeof hourlyRate === 'string' && hourlyRate.trim() === '')) {
+                    teacherUpdateData.hourlyRate = null;
+                } else {
+                    teacherUpdateData.hourlyRate = new Prisma.Decimal(hourlyRate);
+                }
+            }
             if (documentType !== undefined) teacherUpdateData.documentType = documentType as any;
             if (documentNumber !== undefined) teacherUpdateData.documentNumber = documentNumber;
 

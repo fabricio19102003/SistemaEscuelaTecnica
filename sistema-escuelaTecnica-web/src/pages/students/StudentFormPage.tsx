@@ -135,6 +135,11 @@ const StudentFormPage = () => {
     };
 
     const onSubmit: SubmitHandler<StudentForm> = async (data) => {
+        console.log('========== FRONTEND: onSubmit called ==========');
+        console.log('Form data received:', data);
+        console.log('Is Edit Mode:', isEditMode, 'ID:', id);
+        console.log('Has guardian in form?', !!data.guardian);
+        
         try {
             // Map frontend enum values to backend Prisma enum values
             const mapGender = (gender: string) => {
@@ -173,20 +178,32 @@ const StudentFormPage = () => {
                 } : undefined
             };
 
+            console.log('Payload prepared:', payload);
+            console.log('Payload has guardian?', !!payload.guardian);
+            if (payload.guardian) {
+                console.log('Guardian email:', payload.guardian.email);
+                console.log('Guardian name:', payload.guardian.firstName, payload.guardian.paternalSurname);
+            }
+
             // Create FormData for upload
             const formData = new FormData();
             
             // Append payload as JSON string
             formData.append('data', JSON.stringify(payload));
             
+            console.log('FormData created, JSON payload appended');
+            
             // Append photo if selected
             if (photoFile) {
                 formData.append('photo', photoFile);
+                console.log('Photo file appended to FormData');
             }
 
             if (isEditMode && id) {
+                console.log('Calling updateStudent with id:', id);
                 // Now using FormData for update as well
                 await updateStudent(id, formData); 
+                console.log('updateStudent completed successfully');
                 Swal.fire({
                     title: '¡Actualizado!',
                     text: 'El estudiante ha sido actualizado correctamente.',
@@ -195,8 +212,10 @@ const StudentFormPage = () => {
                     color: '#fff'
                 });
             } else {
+               console.log('Calling createStudent');
                // For create, we use FormData
                await createStudent(formData);
+               console.log('createStudent completed successfully');
                Swal.fire({
                     title: '¡Registrado!',
                     text: 'El estudiante ha sido registrado correctamente.',
@@ -207,7 +226,10 @@ const StudentFormPage = () => {
             }
             navigate('/dashboard/students');
         } catch (error: any) {
+            console.error('========== ERROR in onSubmit ==========');
             console.error('Error submitting form:', error);
+            console.error('Error message:', error.message);
+            console.error('Error response:', error.response?.data);
             Swal.fire({
                 title: 'Error',
                 text: error.message || 'Hubo un error al guardar el estudiante.',
@@ -233,7 +255,41 @@ const StudentFormPage = () => {
                 </h1>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-8">
+            <form onSubmit={handleSubmit(onSubmit as any, (errors) => {
+                console.error('Validation Errors:', errors);
+                
+                // Helper to format errors recursively
+                const formatErrors = (errObj: any, prefix = ''): string[] => {
+                    let messages: string[] = [];
+                    for (const key in errObj) {
+                        if (errObj[key]?.message) {
+                            messages.push(`${prefix}${key}: ${errObj[key].message}`);
+                        } else if (typeof errObj[key] === 'object' && errObj[key] !== null && !errObj[key].message) {
+                            messages = [...messages, ...formatErrors(errObj[key], `${key}.`)];
+                        }
+                    }
+                    return messages;
+                };
+
+                const errorMessages = formatErrors(errors);
+
+                Swal.fire({
+                    title: 'Error de Validación',
+                    html: `<div class="text-left text-sm max-h-60 overflow-y-auto">
+                            <p class="mb-2">Por favor revise los siguientes errores:</p>
+                            <ul class="list-disc pl-5">
+                                ${errorMessages.map(msg => `<li>${msg}</li>`).join('')}
+                            </ul>
+                           </div>`,
+                    icon: 'warning',
+                    background: '#1f2937', 
+                    color: '#fff'
+                });
+            })} className="space-y-8">
+            
+                {/* Hidden fields to ensure form data is complete */}
+                <input type="hidden" {...register('documentType')} />
+                <input type="hidden" {...register('guardian.documentType')} />
                 {/* 1. Datos Personales */}
                 <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
                     <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">

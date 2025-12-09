@@ -7,10 +7,10 @@ export const createClassroom = async (req: Request, res: Response) => {
         const { name, capacity, location, description } = req.body;
         const classroom = await prisma.classroom.create({
             data: {
-                name,
+                name: name.toUpperCase(),
                 capacity: Number(capacity),
-                location,
-                description
+                location: location ? location.toUpperCase() : null,
+                description: description ? description.toUpperCase() : null
             }
         });
         res.status(201).json(classroom);
@@ -26,7 +26,7 @@ export const getClassrooms = async (req: Request, res: Response) => {
         });
         res.json(classrooms);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching classrooms' });
+        res.status(400).json({ message: 'Error updating classroom' });
     }
 };
 
@@ -35,13 +35,12 @@ export const updateClassroom = async (req: Request, res: Response) => {
     try {
         const { name, capacity, location, description, isActive } = req.body;
 
-        const updateData: any = {}; // Using any for flexibility or better: explicit type construct
-
-        if (name !== undefined) updateData.name = name;
+        const updateData: any = {};
+        if (name) updateData.name = name.toUpperCase();
         if (capacity !== undefined) updateData.capacity = Number(capacity);
-        if (location !== undefined) updateData.location = location;
-        if (description !== undefined) updateData.description = description;
-        if (isActive !== undefined) updateData.isActive = Boolean(isActive);
+        if (location !== undefined) updateData.location = location ? location.toUpperCase() : null;
+        if (description !== undefined) updateData.description = description ? description.toUpperCase() : null;
+        if (isActive !== undefined) updateData.isActive = isActive;
 
         const classroom = await prisma.classroom.update({
             where: { id: Number(id) },

@@ -228,7 +228,11 @@ export const getStudents = async (req: Request, res: Response) => {
                         isActive: true
                     }
                 },
-                school: true,
+                school: {
+                    include: {
+                        agreement: true
+                    }
+                },
                 studentGuardians: {
                     include: {
                         guardian: {
@@ -304,18 +308,34 @@ export const getStudentById = async (req: Request, res: Response) => {
 };
 
 export const updateStudent = async (req: Request, res: Response) => {
+    console.log('🔥🔥🔥 UPDATE STUDENT FUNCTION CALLED 🔥🔥🔥');
     const { id } = req.params;
 
     let bodyData = req.body;
+
+    console.log('========== UPDATE STUDENT DEBUG ==========');
+    console.log('Student ID:', id);
+    console.log('req.body keys:', Object.keys(req.body));
+
     // Check if data is coming as stringified JSON (from FormData)
     if (req.body.data && typeof req.body.data === 'string') {
         try {
             bodyData = JSON.parse(req.body.data);
+            console.log('✓ Parsed JSON from string');
         } catch (e) {
+            console.error('✗ JSON Parse Error:', e);
             return res.status(400).json({ message: 'Invalid JSON data in request' });
         }
     } else if (req.body.data && typeof req.body.data === 'object') {
         bodyData = req.body.data;
+        console.log('✓ Using req.body.data as object');
+    }
+
+    console.log('bodyData keys:', Object.keys(bodyData));
+    console.log('Has guardian?', 'guardian' in bodyData);
+    if (bodyData.guardian) {
+        console.log('Guardian data keys:', Object.keys(bodyData.guardian));
+        console.log('Guardian email:', bodyData.guardian.email);
     }
 
     const {
@@ -326,8 +346,22 @@ export const updateStudent = async (req: Request, res: Response) => {
         address,
         medicalNotes,
         schoolId,
-        enrollmentStatus
+        enrollmentStatus,
+        documentType,
+        documentNumber,
+        dateOfBirth,
+        gender,
+        guardian
     } = bodyData;
+
+    console.log('Extracted fields:');
+    console.log('- firstName:', firstName);
+    console.log('- documentType:', documentType);
+    console.log('- documentNumber:', documentNumber);
+    console.log('- dateOfBirth:', dateOfBirth);
+    console.log('- gender:', gender);
+    console.log('- guardian:', guardian ? 'YES' : 'NO');
+    console.log('==========================================');
 
     try {
         const result = await prisma.$transaction(async (tx) => {
@@ -338,15 +372,37 @@ export const updateStudent = async (req: Request, res: Response) => {
             if (schoolId !== undefined) studentUpdateData.school = schoolId ? { connect: { id: Number(schoolId) } } : { disconnect: true };
             if (enrollmentStatus !== undefined) studentUpdateData.enrollmentStatus = enrollmentStatus;
 
+            // Add new student fields
+            if (documentType !== undefined) studentUpdateData.documentType = documentType as any;
+            if (documentNumber !== undefined) studentUpdateData.documentNumber = documentNumber;
+            if (gender !== undefined) studentUpdateData.gender = gender as any;
+            if (dateOfBirth !== undefined) {
+                const parsedDate = new Date(dateOfBirth);
+                if (!isNaN(parsedDate.getTime())) {
+                    studentUpdateData.dateOfBirth = parsedDate;
+                }
+            }
+
             // Update Student Profile
             const updatedStudent = await tx.student.update({
                 where: { id: Number(id) },
                 data: studentUpdateData,
                 include: {
                     user: true,
-                    school: true
+                    school: true,
+                    studentGuardians: {
+                        include: {
+                            guardian: {
+                                include: {
+                                    user: true
+                                }
+                            }
+                        }
+                    }
                 }
             });
+
+            console.log('Student updated, has guardians?', updatedStudent.studentGuardians?.length || 0);
 
             // Update User Profile (Name, Phone, Photo)
             const userUpdateData: Prisma.UserUpdateInput = {};
@@ -370,8 +426,143 @@ export const updateStudent = async (req: Request, res: Response) => {
                 }
             }
 
+            // Handle Guardian Update/Create
+            if (guardian) {
+                console.log('Processing guardian data...');
+                const primaryGuardianRel = updatedStudent.studentGuardians && updatedStudent.studentGuardians.length > 0
+                    ? (updatedStudent.studentGuardians.find((sg: any) => sg.isPrimary) || updatedStudent.studentGuardians[0])
+                    : null;
 
-            return updatedStudent;
+                if (primaryGuardianRel) {
+                    console.log('Updating existing guardian:', primaryGuardianRel.guardianId);
+                    const guardianId = primaryGuardianRel.guardianId;
+
+                    // Update Guardian User
+                    const guardianUserUpdateData: Prisma.UserUpdateInput = {};
+                    if (guardian.firstName) guardianUserUpdateData.firstName = guardian.firstName;
+                    if (guardian.paternalSurname) guardianUserUpdateData.paternalSurname = guardian.paternalSurname;
+                    if (guardian.maternalSurname) guardianUserUpdateData.maternalSurname = guardian.maternalSurname;
+                    if (guardian.email) guardianUserUpdateData.email = guardian.email;
+                    if (guardian.phone) guardianUserUpdateData.phone = guardian.phone;
+
+                    if (Object.keys(guardianUserUpdateData).length > 0) {
+                        const guardianProfile = await tx.guardian.findUnique({ where: { id: guardianId } });
+                        if (guardianProfile) {
+                            await tx.user.update({
+                                where: { id: guardianProfile.userId },
+                                data: guardianUserUpdateData
+                            });
+                        }
+                    }
+
+                    // Update Guardian Profile
+                    const guardianProfileUpdateData: Prisma.GuardianUpdateInput = {};
+                    if (guardian.documentType) guardianProfileUpdateData.documentType = guardian.documentType;
+                    if (guardian.documentNumber) guardianProfileUpdateData.documentNumber = guardian.documentNumber;
+                    if (guardian.relationship) guardianProfileUpdateData.relationship = guardian.relationship;
+                    if (guardian.occupation) guardianProfileUpdateData.occupation = guardian.occupation;
+                    if (guardian.workplace) guardianProfileUpdateData.workplace = guardian.workplace;
+
+                    if (Object.keys(guardianProfileUpdateData).length > 0) {
+                        await tx.guardian.update({
+                            where: { id: guardianId },
+                            data: guardianProfileUpdateData
+                        });
+                    }
+
+                } else {
+                    console.log('Creating NEW guardian...');
+                    let guardianId: number | null = null;
+                    const existingGuardianUser = await tx.user.findUnique({
+                        where: { email: guardian.email }
+                    });
+
+                    if (existingGuardianUser) {
+                        console.log('Found existing user with email:', guardian.email);
+                        const existingGuardianProfile = await tx.guardian.findUnique({
+                            where: { userId: existingGuardianUser.id }
+                        });
+
+                        if (existingGuardianProfile) {
+                            guardianId = existingGuardianProfile.id;
+                        } else {
+                            const newGuardianProfile = await tx.guardian.create({
+                                data: {
+                                    userId: existingGuardianUser.id,
+                                    documentType: guardian.documentType,
+                                    documentNumber: guardian.documentNumber,
+                                    relationship: guardian.relationship,
+                                    occupation: guardian.occupation,
+                                    workplace: guardian.workplace
+                                }
+                            });
+                            guardianId = newGuardianProfile.id;
+                        }
+                    } else {
+                        console.log('Creating completely new guardian user');
+                        const guardianPasswordHash = await hashPassword('guardian123');
+                        const newGuardianUser = await tx.user.create({
+                            data: {
+                                email: guardian.email,
+                                passwordHash: guardianPasswordHash,
+                                firstName: guardian.firstName,
+                                paternalSurname: guardian.paternalSurname,
+                                maternalSurname: guardian.maternalSurname,
+                                phone: guardian.phone,
+                                isActive: true,
+                                userRoles: {
+                                    create: [{ role: { connect: { name: 'LEGAL_GUARDIAN' } } }]
+                                }
+                            }
+                        });
+
+                        const newGuardianProfile = await tx.guardian.create({
+                            data: {
+                                userId: newGuardianUser.id,
+                                documentType: guardian.documentType,
+                                documentNumber: guardian.documentNumber,
+                                relationship: guardian.relationship,
+                                occupation: guardian.occupation,
+                                workplace: guardian.workplace
+                            }
+                        });
+                        guardianId = newGuardianProfile.id;
+                    }
+
+                    if (guardianId) {
+                        console.log('Linking guardianId', guardianId, 'to studentId', updatedStudent.id);
+                        await tx.studentGuardian.create({
+                            data: {
+                                studentId: updatedStudent.id,
+                                guardianId: guardianId,
+                                isPrimary: true,
+                                canPickup: true
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Refetch complete student data
+            const freshStudent = await tx.student.findUnique({
+                where: { id: Number(id) },
+                include: {
+                    user: true,
+                    school: true,
+                    studentGuardians: {
+                        include: {
+                            guardian: {
+                                include: {
+                                    user: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            console.log('Final student has guardians?', freshStudent?.studentGuardians?.length || 0);
+            return freshStudent;
         });
 
         res.json(result);

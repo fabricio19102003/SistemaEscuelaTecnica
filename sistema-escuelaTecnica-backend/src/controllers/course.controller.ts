@@ -42,9 +42,10 @@ export const createCourse = async (req: Request, res: Response) => {
 
         const newCourse = await prisma.course.create({
             data: {
-                name,
+                name: name.toUpperCase(),
                 code,
-                description,
+                description: description ? description.toUpperCase() : null,
+
                 durationMonths: durationMonths ? Number(durationMonths) : null,
                 imageUrl,
                 isActive: true,
@@ -111,15 +112,23 @@ export const updateCourse = async (req: Request, res: Response) => {
 
         const { name, description, durationMonths, isActive, teacherId, classroomId, schedules } = bodyData;
 
-        const updateData: Prisma.CourseUpdateInput = {
-            ...(name && { name }),
-            // Code is usually not editable if auto-generated, but if needed, can add check. Assuming not for now.
-            ...(description && { description }),
-            ...(durationMonths !== undefined && { durationMonths: durationMonths ? Number(durationMonths) : null }),
-            ...(isActive !== undefined && { isActive: Boolean(isActive) }),
-            ...(teacherId !== undefined && { teacher: teacherId ? { connect: { id: Number(teacherId) } } : { disconnect: true } }),
-            ...(classroomId !== undefined && { classroom: classroomId ? { connect: { id: Number(classroomId) } } : { disconnect: true } }),
-        };
+        const updateData: Prisma.CourseUpdateInput = {};
+
+        if (name) updateData.name = name.toUpperCase();
+        if (description !== undefined) updateData.description = description ? description.toUpperCase() : null;
+
+        if (durationMonths !== undefined) updateData.durationMonths = durationMonths ? Number(durationMonths) : null;
+        if (isActive !== undefined) updateData.isActive = Boolean(isActive);
+
+        if (teacherId !== undefined) {
+            if (teacherId) updateData.teacher = { connect: { id: Number(teacherId) } };
+            else updateData.teacher = { disconnect: true };
+        }
+
+        if (classroomId !== undefined) {
+            if (classroomId) updateData.classroom = { connect: { id: Number(classroomId) } };
+            else updateData.classroom = { disconnect: true };
+        }
 
         if (req.file) {
             updateData.imageUrl = await uploadToCloudinary(req.file.buffer, 'courses');
@@ -188,8 +197,9 @@ export const getCourses = async (req: Request, res: Response) => {
             where: { isActive: true }
         });
         res.json(courses);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching courses' });
+    } catch (error: any) {
+        console.error('Error fetching courses:', error);
+        res.status(500).json({ message: 'Error fetching courses', error: error.message });
     }
 };
 
@@ -234,90 +244,4 @@ export const createLevel = async (req: Request, res: Response) => {
     }
 };
 
-// ==========================================
-// GROUPS
-// ==========================================
 
-export const createGroup = async (req: Request, res: Response) => {
-    const {
-        levelId,
-        teacherId,
-        name,
-        code,
-        startDate,
-        endDate,
-        maxCapacity,
-        minCapacity,
-        classroom,
-        notes,
-        schedules // Array of { dayOfWeek, startTime, endTime }
-    } = req.body;
-
-    try {
-        const result = await prisma.$transaction(async (tx) => {
-            // 1. Create Group
-            const newGroup = await tx.group.create({
-                data: {
-                    levelId: Number(levelId),
-                    teacherId: Number(teacherId),
-                    name,
-                    code,
-                    startDate: new Date(startDate),
-                    endDate: new Date(endDate),
-                    maxCapacity: Number(maxCapacity),
-                    minCapacity: minCapacity ? Number(minCapacity) : 5,
-                    currentEnrolled: 0,
-                    status: 'OPEN',
-                    classroom,
-                    notes
-                }
-            });
-
-            // 2. Create Schedules
-            if (schedules && Array.isArray(schedules) && schedules.length > 0) {
-                await tx.schedule.createMany({
-                    data: schedules.map((s: any) => ({
-                        groupId: newGroup.id,
-                        dayOfWeek: s.dayOfWeek,
-                        startTime: new Date(`1970-01-01T${s.startTime}Z`), // Expecting "HH:mm:ss" or ISO
-                        endTime: new Date(`1970-01-01T${s.endTime}Z`)
-                    }))
-                });
-            }
-
-            return newGroup;
-        });
-
-        res.status(201).json(result);
-    } catch (error: any) {
-        console.error('Error creating group:', error);
-        res.status(400).json({ message: 'Error creating group: ' + error.message });
-    }
-};
-
-export const getGroups = async (req: Request, res: Response) => {
-    try {
-        const groups = await prisma.group.findMany({
-            include: {
-                level: {
-                    include: { course: true }
-                },
-                teacher: {
-                    include: {
-                        user: {
-                            select: { firstName: true, paternalSurname: true }
-                        }
-                    }
-                },
-                schedules: true,
-                enrollments: {
-                    select: { id: true } // Just to count if needed, though currentEnrolled is a field
-                }
-            },
-            orderBy: { startDate: 'desc' }
-        });
-        res.json(groups);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching groups' });
-    }
-};

@@ -4,29 +4,36 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { ArrowLeft, Save, Upload, Book, Plus, Trash } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash } from 'lucide-react';
+import { getGroupById, createGroup, updateGroup } from '../../services/api/group.service';
 import { CourseService } from '../../services/api/course.service';
 import { teacherService } from '../../services/api/teacher.service';
-import { classroomService, type Classroom } from '../../services/api/classroom.service';
 import { ScheduleTemplateService } from '../../services/api/schedule-template.service';
-import ClassroomModal from '../../components/modals/ClassroomModal';
 import type { Teacher } from '../../types/teacher.types';
+import type { Course } from '../../types/course.types';
 
-const courseSchema = z.object({
+
+const groupSchema = z.object({
+    courseId: z.string().min(1, 'El curso es requerido'), // Intermediate helper
+    levelId: z.string().min(1, 'El nivel es requerido'),
+    teacherId: z.string().min(1, 'El docente es requerido'),
     name: z.string().min(1, 'El nombre es requerido'),
-    // code: z.string().min(1, 'El código es requerido'), // Auto-generated
-    description: z.string().optional(),
-    durationMonths: z.string().optional(),
-    teacherId: z.string().optional(),
-    classroomId: z.string().optional(),
+    code: z.string().min(1, 'El código es requerido'),
+    startDate: z.string().min(1, 'Fecha inicio requerida'),
+    endDate: z.string().min(1, 'Fecha fin requerida'),
+    maxCapacity: z.string().transform(v => Number(v)).refine(n => n > 0, "Debe ser mayor a 0"),
+    minCapacity: z.string().transform(v => Number(v)).optional(),
+    classroom: z.string().optional(),
+    notes: z.string().optional(),
     schedules: z.array(z.object({
         dayOfWeek: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']),
         startTime: z.string().min(1, 'Hora inicio requerida'),
         endTime: z.string().min(1, 'Hora fin requerida')
-    })).optional()
+    })).default([])
 });
 
-type CourseSimpleForm = z.infer<typeof courseSchema>;
+type GroupFormInput = z.input<typeof groupSchema>;
+type GroupForm = z.output<typeof groupSchema>;
 
 const DAYS_OF_WEEK = [
     { value: 'MONDAY', label: 'Lunes' },
@@ -38,21 +45,21 @@ const DAYS_OF_WEEK = [
     { value: 'SUNDAY', label: 'Domingo' }
 ];
 
-const CourseFormPage = () => {
+const GroupFormPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditMode = !!id;
     const [isLoading, setIsLoading] = useState(false);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [imageFile, setImageFile] = useState<File | null>(null);
     const [teachers, setTeachers] = useState<Teacher[]>([]);
-    const [classrooms, setClassrooms] = useState<Classroom[]>([]);
-    const [isClassroomModalOpen, setIsClassroomModalOpen] = useState(false);
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [selectedCourseId, setSelectedCourseId] = useState<string>('');
 
-    const { register, control, handleSubmit, setValue, getValues, formState: { errors }, reset } = useForm<CourseSimpleForm>({
-        resolver: zodResolver(courseSchema),
+    const { register, control, handleSubmit, setValue, watch, formState: { errors }, reset } = useForm<GroupFormInput, any, GroupForm>({
+        resolver: zodResolver(groupSchema),
         defaultValues: {
-            schedules: []
+            schedules: [],
+            minCapacity: '5',
+            maxCapacity: '30'
         }
     });
 
@@ -61,122 +68,74 @@ const CourseFormPage = () => {
         name: "schedules"
     });
 
+    const watchCourseId = watch('courseId');
+
+    useEffect(() => {
+        if (watchCourseId) {
+            setSelectedCourseId(watchCourseId);
+        }
+    }, [watchCourseId]);
+
     useEffect(() => {
         loadResources();
         if (isEditMode) {
-            loadCourse();
+            loadGroup();
         }
     }, [isEditMode, id]);
 
     const loadResources = async () => {
         try {
-            const [teachersData, classroomsData] = await Promise.all([
+            const [teachersData, coursesData] = await Promise.all([
                 teacherService.getAll(),
-                classroomService.getAll()
+                CourseService.getAll()
             ]);
             setTeachers(teachersData);
-            setClassrooms(classroomsData);
+            setCourses(coursesData);
         } catch (error) {
             console.error('Error loading resources:', error);
         }
     };
 
-    const loadCourse = async () => {
+    const loadGroup = async () => {
         if (!id) return;
         setIsLoading(true);
         try {
-            const course = await CourseService.getById(id);
+            const group = await getGroupById(Number(id));
+            
+            // Find course ID from level
+            const courseId = group.level?.courseId.toString() || '';
+            
             reset({
-                name: course.name,
-                description: course.description || '',
-                durationMonths: course.durationMonths?.toString() || '',
-                teacherId: course.teacherId?.toString() || '',
-                classroomId: course.classroomId?.toString() || '',
-                schedules: course.schedules?.map((s: any) => ({
+                courseId: courseId,
+                levelId: group.levelId.toString(),
+                teacherId: group.teacherId.toString(),
+                name: group.name,
+                code: group.code,
+                startDate: group.startDate ? new Date(group.startDate).toISOString().split('T')[0] : '',
+                endDate: group.endDate ? new Date(group.endDate).toISOString().split('T')[0] : '',
+                maxCapacity: group.maxCapacity.toString(),
+                minCapacity: group.minCapacity?.toString(),
+                classroom: group.classroom || '',
+                notes: group.notes || '',
+                schedules: group.schedules?.map((s: any) => ({
                     dayOfWeek: s.dayOfWeek,
-                    startTime: s.startTime ? (typeof s.startTime === 'string' && s.startTime.length > 5 ? s.startTime.substring(11, 16) : s.startTime.substring(0, 5)) : '', // Try to extract HH:mm safely
-                    endTime: s.endTime ? (typeof s.endTime === 'string' && s.endTime.length > 5 ? s.endTime.substring(11, 16) : s.endTime.substring(0, 5)) : ''
+                    startTime: s.startTime ? (s.startTime.includes('T') ? s.startTime.substring(11, 16) : s.startTime.substring(0, 5)) : '',
+                    endTime: s.endTime ? (s.endTime.includes('T') ? s.endTime.substring(11, 16) : s.endTime.substring(0, 5)) : ''
                 })) || []
             });
-            if (course.imageUrl) {
-                setImagePreview(course.imageUrl);
-            }
+            setSelectedCourseId(courseId);
         } catch (error) {
-            console.error('Error loading course:', error);
+            console.error('Error loading group:', error);
             Swal.fire({
                 title: 'Error',
-                text: 'No se pudo cargar el curso',
+                text: 'No se pudo cargar el grupo',
                 icon: 'error',
                 background: '#1f2937',
                 color: '#fff'
             });
-            navigate('/dashboard/courses');
+            navigate('/dashboard/groups');
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleClassroomCreated = (newClassroom: Classroom) => {
-        setClassrooms(prev => [...prev, newClassroom]);
-        setValue('classroomId', newClassroom.id.toString());
-    };
-
-    const saveAsTemplate = async () => {
-        const schedules = getValues('schedules');
-
-        if (!schedules || schedules.length === 0) {
-            Swal.fire({ title: 'Error', text: 'No hay horarios para guardar', icon: 'warning' });
-            return;
-        }
-
-        // Validate that all schedules have required fields
-        const validSchedules = schedules.filter(s => s.dayOfWeek && s.startTime && s.endTime);
-
-        if (validSchedules.length !== schedules.length) {
-             Swal.fire({ title: 'Atención', text: 'Se omitirán los horarios incompletos. ¿Deseas continuar?', icon: 'warning', showCancelButton: true }).then(async (result) => {
-                if (result.isConfirmed) {
-                     await processSaveTemplate(validSchedules);
-                }
-             });
-             return;
-        }
-
-        await processSaveTemplate(validSchedules);
-    };
-
-    const processSaveTemplate = async (schedules: any[]) => {
-        const { value: name } = await Swal.fire({
-            title: 'Guardar Plantilla',
-            input: 'text',
-            inputLabel: 'Nombre de la plantilla',
-            inputPlaceholder: 'Ej. Lunes y Miércoles Mañana',
-            showCancelButton: true,
-            inputValidator: (value) => {
-                if (!value) return 'Debes escribir un nombre';
-            }
-        });
-
-        if (name) {
-            try {
-                await ScheduleTemplateService.create({ name, items: schedules });
-                Swal.fire('Guardado', 'La plantilla se ha guardado correctamente', 'success');
-            } catch (error: any) {
-                console.error("Error saving template:", error);
-                const msg = error.response?.data?.message || 'No se pudo guardar la plantilla';
-                Swal.fire('Error', msg, 'error');
-            }
         }
     };
 
@@ -201,7 +160,7 @@ const CourseFormPage = () => {
                 if (template) {
                     setValue('schedules', template.items.map(item => ({
                         dayOfWeek: item.dayOfWeek as any,
-                        startTime: item.startTime.substring(11, 16), // "1970-01-01T08:00:00.000Z" -> "08:00"
+                        startTime: item.startTime.substring(11, 16),
                         endTime: item.endTime.substring(11, 16)
                     })));
                 }
@@ -211,44 +170,48 @@ const CourseFormPage = () => {
         }
     };
 
-    const onSubmit = async (data: CourseSimpleForm) => {
+    const onSubmit = async (data: GroupForm) => {
         setIsLoading(true);
         try {
             const payload = {
+                levelId: Number(data.levelId),
+                teacherId: Number(data.teacherId),
                 name: data.name,
-                description: data.description,
-                durationMonths: data.durationMonths ? Number(data.durationMonths) : undefined,
-                teacherId: data.teacherId ? Number(data.teacherId) : undefined,
-                classroomId: data.classroomId ? Number(data.classroomId) : undefined,
-                schedules: data.schedules,
-                image: imageFile || undefined
+                code: data.code,
+                startDate: data.startDate,
+                endDate: data.endDate,
+                maxCapacity: Number(data.maxCapacity),
+                minCapacity: data.minCapacity ? Number(data.minCapacity) : undefined,
+                classroom: data.classroom,
+                notes: data.notes,
+                schedules: data.schedules
             };
 
             if (isEditMode && id) {
-                await CourseService.update(id, payload);
+                await updateGroup(Number(id), payload);
                 Swal.fire({
                     title: '¡Actualizado!',
-                    text: 'El curso ha sido actualizado correctamente.',
+                    text: 'El grupo ha sido actualizado correctamente.',
                     icon: 'success',
                     background: '#1f2937',
                     color: '#fff'
                 });
             } else {
-                await CourseService.create(payload);
+                await createGroup(payload);
                 Swal.fire({
                     title: '¡Registrado!',
-                    text: 'El curso ha sido registrado correctamente.',
+                    text: 'El grupo ha sido registrado correctamente.',
                     icon: 'success',
                     background: '#1f2937',
                     color: '#fff'
                 });
             }
-            navigate('/dashboard/courses');
+            navigate('/dashboard/groups');
         } catch (error: any) {
-            console.error('Error saving course:', error);
+            console.error('Error saving group:', error);
             Swal.fire({
                 title: 'Error',
-                text: error.response?.data?.message || 'Error al guardar el curso',
+                text: error.response?.data?.message || 'Error al guardar el grupo',
                 icon: 'error',
                 background: '#1f2937',
                 color: '#fff'
@@ -258,6 +221,9 @@ const CourseFormPage = () => {
         }
     };
 
+    // Derived state
+    const currentLevels = courses.find(c => c.id.toString() === selectedCourseId)?.levels || [];
+
     if (isLoading && isEditMode) {
         return <div className="text-white text-center mt-10">Cargando datos...</div>;
     }
@@ -266,86 +232,83 @@ const CourseFormPage = () => {
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center gap-4 mb-6">
                 <button 
-                    onClick={() => navigate('/dashboard/courses')}
+                    onClick={() => navigate('/dashboard/groups')}
                     className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"
                 >
                     <ArrowLeft size={24} />
                 </button>
                 <div>
                     <h1 className="text-2xl font-bold text-white">
-                        {isEditMode ? 'Editar Curso' : 'Nuevo Curso'}
+                        {isEditMode ? 'Editar Grupo' : 'Nuevo Grupo'}
                     </h1>
-                    <p className="text-slate-400">Información del programa académico</p>
+                    <p className="text-slate-400">Información del grupo académico</p>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Image Upload Section */}
-                <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 flex flex-col items-center gap-4">
-                    <div className="relative group">
-                        <div className="w-32 h-32 rounded-xl overflow-hidden bg-slate-700 border-4 border-slate-600 flex items-center justify-center">
-                            {imagePreview ? (
-                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <Book size={48} className="text-slate-400" />
-                            )}
-                        </div>
-                        <label className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-500 transition-colors shadow-lg">
-                            <Upload size={16} className="text-white" />
-                            <input 
-                                type="file" 
-                                className="hidden" 
-                                accept="image/*"
-                                onChange={handleImageChange}
-                            />
-                        </label>
-                    </div>
-                    <p className="text-sm text-slate-400">Imagen del Curso</p>
-                </div>
-
-                {/* Course Information */}
+                {/* Academic Info */}
                 <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 space-y-4">
-                    <h2 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">Detalles Generales</h2>
+                    <h2 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">Información Académica</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Nombre del Curso *</label>
+                            <label className="text-sm font-medium text-slate-300">Curso *</label>
+                            <select
+                                {...register('courseId')}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            >
+                                <option value="">Seleccione un curso</option>
+                                {courses.map((course) => (
+                                    <option key={course.id} value={course.id}>{course.name}</option>
+                                ))}
+                            </select>
+                            {errors.courseId && <span className="text-red-400 text-xs">{errors.courseId.message}</span>}
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300">Nivel *</label>
+                            <select
+                                {...register('levelId')}
+                                disabled={!selectedCourseId}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
+                            >
+                                <option value="">Seleccione un nivel</option>
+                                {currentLevels.map((level) => (
+                                    <option key={level.id} value={level.id}>
+                                        {level.name} (Code: {level.code})
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.levelId && <span className="text-red-400 text-xs">{errors.levelId.message}</span>}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300">Nombre del Grupo *</label>
                             <input
                                 {...register('name')}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 uppercase"
-                                placeholder="Ej. Robótica Básica"
-                                onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="Ej. G-2024-I"
                             />
                             {errors.name && <span className="text-red-400 text-xs">{errors.name.message}</span>}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Duración (Meses)</label>
+                            <label className="text-sm font-medium text-slate-300">Código *</label>
                             <input
-                                type="number"
-                                {...register('durationMonths')}
+                                {...register('code')}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="Ej. GRP001"
                             />
+                            {errors.code && <span className="text-red-400 text-xs">{errors.code.message}</span>}
                         </div>
-
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-300">Descripción</label>
-                        <textarea
-                            {...register('description')}
-                            rows={4}
-                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none uppercase"
-                            placeholder="Descripción detallada del curso..."
-                            onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
-                        />
                     </div>
                 </div>
 
-                {/* Assignments */}
+                {/* Details */}
                 <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 space-y-4">
-                    <h2 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">Asignaciones</h2>
+                    <h2 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">Detalles y Logística</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Docente Responsable</label>
+                            <label className="text-sm font-medium text-slate-300">Docente *</label>
                             <select
                                 {...register('teacherId')}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -353,34 +316,60 @@ const CourseFormPage = () => {
                                 <option value="">Seleccione un docente</option>
                                 {teachers.map((teacher) => (
                                     <option key={teacher.id} value={teacher.id}>
-                                        {teacher.user.firstName} {teacher.user.paternalSurname} {teacher.user.maternalSurname || ''}
+                                        {teacher.user.firstName} {teacher.user.paternalSurname}
                                     </option>
                                 ))}
                             </select>
+                            {errors.teacherId && <span className="text-red-400 text-xs">{errors.teacherId.message}</span>}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Aula / Laboratorio</label>
-                            <div className="flex gap-2">
-                                <select
-                                    {...register('classroomId')}
-                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                >
-                                    <option value="">Seleccione un aula</option>
-                                    {classrooms.map((classroom) => (
-                                        <option key={classroom.id} value={classroom.id}>
-                                            {classroom.name} (Cap: {classroom.capacity})
-                                        </option>
-                                    ))}
-                                </select>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsClassroomModalOpen(true)}
-                                    className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex-shrink-0"
-                                    title="Crear nueva aula"
-                                >
-                                    <Plus size={20} />
-                                </button>
-                            </div>
+                            <label className="text-sm font-medium text-slate-300">Aula (Opcional)</label>
+                            <input
+                                {...register('classroom')}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                placeholder="Ej. Lab 1"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300">Inicio de Clases *</label>
+                            <input
+                                type="date"
+                                {...register('startDate')}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                            {errors.startDate && <span className="text-red-400 text-xs">{errors.startDate.message}</span>}
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300">Fin de Clases *</label>
+                            <input
+                                type="date"
+                                {...register('endDate')}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                            {errors.endDate && <span className="text-red-400 text-xs">{errors.endDate.message}</span>}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300">Capacidad Máxima *</label>
+                            <input
+                                type="number"
+                                {...register('maxCapacity')}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                            {errors.maxCapacity && <span className="text-red-400 text-xs">{errors.maxCapacity.message}</span>}
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300">Capacidad Mínima</label>
+                            <input
+                                type="number"
+                                {...register('minCapacity')}
+                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
                         </div>
                     </div>
                 </div>
@@ -396,13 +385,6 @@ const CourseFormPage = () => {
                                 className="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-lg hover:bg-slate-600 transition-colors"
                             >
                                 Cargar Plantilla
-                            </button>
-                            <button
-                                type="button"
-                                onClick={saveAsTemplate}
-                                className="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-lg hover:bg-slate-600 transition-colors"
-                            >
-                                Guadar como Plantilla
                             </button>
                             <button
                                 type="button"
@@ -462,7 +444,7 @@ const CourseFormPage = () => {
                 <div className="flex justify-end gap-3 pt-4">
                     <button
                         type="button"
-                        onClick={() => navigate('/dashboard/courses')}
+                        onClick={() => navigate('/dashboard/groups')}
                         className="px-6 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition-colors"
                     >
                         Cancelar
@@ -473,18 +455,12 @@ const CourseFormPage = () => {
                         disabled={isLoading}
                     >
                         <Save size={20} />
-                        {isLoading ? 'Guardando...' : (isEditMode ? 'Actualizar Curso' : 'Guardar Curso')}
+                        {isLoading ? 'Guardando...' : (isEditMode ? 'Actualizar Grupo' : 'Guardar Grupo')}
                     </button>
                 </div>
             </form>
-            
-            <ClassroomModal 
-                isOpen={isClassroomModalOpen}
-                onClose={() => setIsClassroomModalOpen(false)}
-                onSuccess={handleClassroomCreated}
-            />
         </div>
     );
 };
 
-export default CourseFormPage;
+export default GroupFormPage;
