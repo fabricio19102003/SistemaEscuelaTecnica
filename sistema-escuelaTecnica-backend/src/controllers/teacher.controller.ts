@@ -66,9 +66,15 @@ export const createTeacher = async (req: Request, res: Response) => {
                 }
             }
 
+            // Generate Username
+            const randomSuffix = Math.floor(100 + Math.random() * 900);
+            const cleanPaternal = paternalSurname.replace(/\s+/g, '').toUpperCase();
+            const username = `${firstName.charAt(0).toUpperCase()}${cleanPaternal}${randomSuffix}`;
+
             const newUser = await tx.user.create({
                 data: {
                     email,
+                    username, // Set generated username
                     passwordHash: hashedPassword,
                     firstName: firstName.toUpperCase(),
                     paternalSurname: paternalSurname.toUpperCase(),

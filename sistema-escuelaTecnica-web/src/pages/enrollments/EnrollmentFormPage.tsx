@@ -7,7 +7,7 @@ import { useCourseStore } from '../../store/course.store';
 import { ArrowLeft, Save, GraduationCap, Users, Calculator, Download, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { PDFViewer } from '@react-pdf/renderer';
+import { pdf, PDFViewer } from '@react-pdf/renderer';
 import EnrollmentPDF from '../../components/enrollment/EnrollmentPDF';
 
 const EnrollmentFormPage = () => {
@@ -26,6 +26,40 @@ const EnrollmentFormPage = () => {
     const [enrollmentResult, setEnrollmentResult] = useState<any>(null);
 
     const { handleSubmit, formState: { isSubmitting } } = useForm();
+
+    const handleDownloadPDF = async () => {
+        if (!enrollmentResult) return;
+        
+        const u = enrollmentResult.student.user;
+        const fullName = `${u.firstName} ${u.paternalSurname} ${u.maternalSurname || ''}`.trim().replace(/\s+/g, '_').toUpperCase();
+        const period = new Date().getMonth() < 6 ? `1-${new Date().getFullYear()}` : `2-${new Date().getFullYear()}`;
+        const courseName = enrollmentResult.group.level.course.name.replace(/\s+/g, '_').toUpperCase();
+        const fileName = `${fullName}_${period}_${courseName}.pdf`;
+
+        try {
+            const blob = await pdf(
+                <EnrollmentPDF data={enrollmentResult} credentials={enrollmentResult.credentials} />
+            ).toBlob();
+            
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudo generar el PDF',
+                icon: 'error',
+                background: '#1f2937', 
+                color: '#fff'
+            });
+        }
+    };
 
     useEffect(() => {
         fetchStudents();
@@ -136,9 +170,17 @@ const EnrollmentFormPage = () => {
                             <h3 className="text-xl font-bold flex items-center gap-2">
                                 <Download size={20} /> Formulario de Matrícula
                             </h3>
-                            <button onClick={() => { setShowPdfModal(false); navigate('/dashboard/enrollments'); }} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                                <X size={24} />
-                            </button>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={handleDownloadPDF}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition-colors text-white"
+                                >
+                                    Descargar PDF
+                                </button>
+                                <button onClick={() => { setShowPdfModal(false); navigate('/dashboard/enrollments'); }} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
                         </div>
                         <div className="flex-1 bg-gray-100 overflow-hidden">
                             <PDFViewer width="100%" height="100%" className="w-full h-full">

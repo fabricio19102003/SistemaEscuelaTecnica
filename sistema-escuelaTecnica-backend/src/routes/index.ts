@@ -9,6 +9,8 @@ import scheduleTemplateRoutes from './schedule-template.routes.js';
 import groupRoutes from './group.routes.js';
 import agreementRoutes from './agreement.routes.js';
 import enrollmentRoutes from './enrollment.routes.js';
+import gradeRoutes from './grade.routes.js';
+import userRoutes from './user.routes.js';
 
 const router = Router();
 
@@ -16,11 +18,13 @@ router.use('/auth', authRoutes);
 router.use('/students', studentRoutes);
 router.use('/teachers', teacherRoutes);
 router.use('/schools', schoolRoutes);
-router.use('/', courseRoutes); // Mounting at root so paths are /courses, /groups, etc.
+router.use('/courses', courseRoutes);
 router.use('/groups', groupRoutes);
 router.use('/classrooms', classroomRoutes);
 router.use('/schedule-templates', scheduleTemplateRoutes);
 router.use('/agreements', agreementRoutes);
 router.use('/enrollments', enrollmentRoutes);
+router.use('/grades', gradeRoutes);
+router.use('/users', userRoutes);
 
 export default router;

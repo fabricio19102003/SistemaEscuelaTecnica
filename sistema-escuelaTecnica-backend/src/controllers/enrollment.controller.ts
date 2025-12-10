@@ -101,9 +101,9 @@ export const createEnrollment = async (req: Request, res: Response) => {
                             status: 'OPEN',
                             schedules: {
                                 create: [
-                                    { dayOfWeek: DayOfWeek.MONDAY, startTime: '08:00:00', endTime: '12:00:00' },
-                                    { dayOfWeek: DayOfWeek.WEDNESDAY, startTime: '08:00:00', endTime: '12:00:00' },
-                                    { dayOfWeek: DayOfWeek.FRIDAY, startTime: '08:00:00', endTime: '12:00:00' }
+                                    { dayOfWeek: DayOfWeek.MONDAY, startTime: new Date('1970-01-01T08:00:00Z'), endTime: new Date('1970-01-01T12:00:00Z') },
+                                    { dayOfWeek: DayOfWeek.WEDNESDAY, startTime: new Date('1970-01-01T08:00:00Z'), endTime: new Date('1970-01-01T12:00:00Z') },
+                                    { dayOfWeek: DayOfWeek.FRIDAY, startTime: new Date('1970-01-01T08:00:00Z'), endTime: new Date('1970-01-01T12:00:00Z') }
                                 ]
                             }
                         }
@@ -131,7 +131,11 @@ export const createEnrollment = async (req: Request, res: Response) => {
             include: {
                 level: {
                     include: {
-                        course: true
+                        course: {
+                            include: {
+                                schedules: true
+                            }
+                        }
                     }
                 },
                 enrollments: true
@@ -187,7 +191,7 @@ export const createEnrollment = async (req: Request, res: Response) => {
         // Username: First Letter Name + Paternal + Random 3
         const randomSuffix = Math.floor(100 + Math.random() * 900);
         const cleanPaternal = student.user.paternalSurname.replace(/\s+/g, '').toUpperCase();
-        // const username = `${student.user.firstName.charAt(0).toUpperCase()}${cleanPaternal}${randomSuffix}`;
+        const username = `${student.user.firstName.charAt(0).toUpperCase()}${cleanPaternal}${randomSuffix}`;
 
         // Password: Random 8 chars (alphanumeric)
         const plainPassword = Math.random().toString(36).slice(-8);
@@ -198,7 +202,10 @@ export const createEnrollment = async (req: Request, res: Response) => {
             // Update User Credentials
             await tx.user.update({
                 where: { id: student.userId },
-                data: { passwordHash: hashedPassword }
+                data: {
+                    passwordHash: hashedPassword,
+                    username: username // Set generated username
+                }
             });
 
             // Create Enrollment
@@ -214,7 +221,7 @@ export const createEnrollment = async (req: Request, res: Response) => {
                     discountPercentage: discountPercentage,
                     agreementId: agreementId,
                     enrollmentNotes: 'Matricula regular',
-                    createdById: userId ? Number(userId) : undefined
+                    createdById: userId ? Number(userId) : null
                 },
                 include: {
                     student: {
@@ -227,7 +234,11 @@ export const createEnrollment = async (req: Request, res: Response) => {
                         include: {
                             level: {
                                 include: {
-                                    course: true
+                                    course: {
+                                        include: {
+                                            schedules: true
+                                        }
+                                    }
                                 }
                             },
                             schedules: true
@@ -245,7 +256,7 @@ export const createEnrollment = async (req: Request, res: Response) => {
         res.status(201).json({
             ...result,
             credentials: {
-                username: student.user.email, // Using Email as "Usuario"
+                username: username, // Return the generated username
                 password: plainPassword
             }
         });
@@ -269,9 +280,14 @@ export const getEnrollments = async (req: Request, res: Response) => {
                     include: {
                         level: {
                             include: {
-                                course: true
+                                course: {
+                                    include: {
+                                        schedules: true
+                                    }
+                                }
                             }
-                        }
+                        },
+                        schedules: true // Added schedules
                     }
                 },
                 createdBy: true
@@ -300,7 +316,11 @@ export const getEnrollmentById = async (req: Request, res: Response) => {
                     include: {
                         level: {
                             include: {
-                                course: true
+                                course: {
+                                    include: {
+                                        schedules: true
+                                    }
+                                }
                             }
                         },
                         schedules: true,
@@ -308,8 +328,7 @@ export const getEnrollmentById = async (req: Request, res: Response) => {
                             include: {
                                 user: true
                             }
-                        },
-
+                        }
                     }
                 },
                 agreement: true,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
-import { LogOut, User, Menu, GraduationCap, Users, BookOpen, LayoutDashboard, School, FileSignature } from 'lucide-react';
+import { LogOut, User, Menu, GraduationCap, Users, BookOpen, LayoutDashboard, School, FileSignature, ClipboardCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import logo from '../../assets/logo_school.png';
 
@@ -20,12 +20,14 @@ const DashboardLayout = () => {
         { path: '/dashboard', label: 'Panel Principal', icon: LayoutDashboard, exact: true },
         { path: '/dashboard/students', label: 'Estudiantes', icon: GraduationCap, roles: ['ADMIN'] },
         { path: '/dashboard/teachers', label: 'Docentes', icon: Users, roles: ['ADMIN'] },
+        { path: '/dashboard/users', label: 'Usuarios', icon: Users, roles: ['ADMIN'] },
         { path: '/dashboard/courses', label: 'Cursos', icon: BookOpen, roles: ['ADMIN', 'TEACHER'] },
         // { path: '/dashboard/groups', label: 'Grupos', icon: Layers, roles: ['ADMIN', 'TEACHER'] },
         { path: '/dashboard/schools', label: 'Colegios', icon: School, roles: ['ADMIN'] },
 
         { path: '/dashboard/agreements', label: 'Convenios', icon: FileSignature, roles: ['ADMIN'] },
-        { path: '/dashboard/enrollments', label: 'Matrículas', icon: FileSignature, roles: ['ADMIN', 'TEACHER'] }, // Using FileSignature for now or similar
+        { path: '/dashboard/enrollments', label: 'Matrículas', icon: FileSignature, roles: ['ADMIN', 'TEACHER'] }, 
+        { path: '/dashboard/grades', label: 'Calificaciones', icon: ClipboardCheck, roles: ['ADMIN', 'TEACHER'] },
     ];
 
     return (

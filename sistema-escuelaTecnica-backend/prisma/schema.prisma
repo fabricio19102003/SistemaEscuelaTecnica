@@ -16,7 +16,8 @@ datasource db {
 
 model User {
   id               Int       @id @default(autoincrement()) @db.UnsignedInt
-  email            String    @unique @db.VarChar(150)
+  username         String?   @unique @db.VarChar(50) // New field for login
+  email            String?   @unique @db.VarChar(150) // Made optional as requested "not emails" for login, but good to keep
   passwordHash     String    @map("password_hash") @db.VarChar(255)
   firstName        String    @map("first_name") @db.VarChar(100)
   paternalSurname  String    @map("paternal_surname") @db.VarChar(100)
@@ -379,6 +380,8 @@ model Grade {
   enrollmentId   Int            @map("enrollment_id") @db.UnsignedInt
   evaluationName String         @map("evaluation_name") @db.VarChar(150)
   evaluationType EvaluationType @map("evaluation_type")
+  progressTest   Decimal?       @map("progress_test") @db.Decimal(5, 2)
+  classPerformance Decimal?     @map("class_performance") @db.Decimal(5, 2)
   gradeValue     Decimal        @map("grade_value") @db.Decimal(5, 2)
   maxGrade       Decimal        @default(20.00) @map("max_grade") @db.Decimal(5, 2)
   weight         Decimal        @default(1.00) @db.Decimal(5, 2)
@@ -407,6 +410,7 @@ model ReportCard {
   finalGrade           Decimal          @map("final_grade") @db.Decimal(5, 2)
   maxGrade             Decimal          @default(20.00) @map("max_grade") @db.Decimal(5, 2)
   attendancePercentage Decimal?         @map("attendance_percentage") @db.Decimal(5, 2)
+  absences             Int              @default(0) // New field for report card
   teacherComments      String?          @map("teacher_comments") @db.Text
   status               ReportCardStatus
   issuedDate           DateTime?        @map("issued_date") @db.Date
@@ -760,6 +764,12 @@ enum AttendanceStatus {
 }
 
 enum EvaluationType {
+  SPEAKING
+  LISTENING
+  READING
+  WRITING
+  VOCABULARY
+  GRAMMAR
   QUIZ
   EXAM
   HOMEWORK

@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   metaCell: {
     width: '20%',
     padding: 5,
-    fontSize: 8,
+    fontSize: 9, // Increased from 8
     textAlign: 'center',
     justifyContent: 'flex-start'
   },
@@ -178,7 +178,8 @@ const EnrollmentPDF = ({ data, credentials }: EnrollmentPDFProps) => {
     const fullTitle = `${courseName} ${levelName}`;
     const price = level?.basePrice ? Number(level.basePrice) : 450;
     const discountPrice = Number(data.agreedPrice);
-    const dateDepos = new Date(data.enrollmentDate).toLocaleDateString('es-ES');
+    // Updated to use current date for "Fecha Depósito" as requested
+    const dateDepos = new Date().toLocaleDateString('es-ES');
     const period = group?.code?.split('-')[1] ? `${new Date().getMonth() < 6 ? '1' : '2'}/${new Date().getFullYear()}` : '1/2025'; // Estimating period
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2 }).format(val) + ' Bs.';
@@ -214,7 +215,7 @@ const EnrollmentPDF = ({ data, credentials }: EnrollmentPDFProps) => {
                 </View>
 
                 {/* MAIN FORM BODY TABLE */}
-                <View style={{ ...styles.table, borderTopWidth: 1 }}> {/* Reset margin bottom if needed */}
+                <View style={{ ...styles.table, borderTopWidth: 1 }}>
                     
                     {/* 1. Cost Row */}
                     <View style={styles.row}>
@@ -250,14 +251,19 @@ const EnrollmentPDF = ({ data, credentials }: EnrollmentPDFProps) => {
                                 <View style={{ ...styles.cell, width: '20%' }}>
                                     <Text style={styles.value}>{student?.documentNumber}</Text>
                                 </View>
-                                <View style={{ ...styles.cell, width: '20%', borderRightWidth: 0 }}>
-                                    <Text style={styles.value}>{student?.documentNumber}</Text>
+
+                                {/* Added R.E. Field - Widened */}
+                                <View style={{ ...styles.cell, width: '10%', backgroundColor: '#fafafa' }}>
+                                    <Text style={styles.bold}>R.E.:</Text>
+                                </View>
+                                <View style={{ ...styles.cell, width: '20%' }}> {/* Increased width */}
+                                    <Text style={{...styles.value, fontSize: 9}}>{student?.registrationCode || ''}</Text>
                                 </View>
                                 {/* Removed Exp field as requested */}
                                 <View style={{ ...styles.cell, width: '15%', backgroundColor: '#fafafa' }}>
                                     <Text style={styles.bold}>Celular:</Text>
                                 </View>
-                                <View style={{ ...styles.cell, width: '35%', borderRightWidth: 0 }}>
+                                <View style={{ ...styles.cell, width: '25%', borderRightWidth: 0 }}> {/* Adjusted width */}
                                     <Text style={styles.value}>{user?.phone}</Text>
                                 </View>
                             </View>
@@ -274,23 +280,27 @@ const EnrollmentPDF = ({ data, credentials }: EnrollmentPDFProps) => {
                                     <Text style={styles.bold}>Horario:</Text>
                                 </View>
                                 <View style={{ width: '35%' }}>
-                                     {/* Nested Table approximation */}
-                                     {group?.schedules?.map((s: any, i: number) => (
-                                         <View key={i} style={{ flexDirection: 'row', borderBottomWidth: i === (group.schedules.length - 1) ? 0 : 1, borderColor: '#000' }}>
-                                             <View style={{ width: '50%', borderRightWidth: 1, padding: 2, backgroundColor: '#fafafa' }}>
-                                                <Text style={{ fontSize: 8 }}>{s.dayOfWeek}</Text>
-                                             </View>
-                                             <View style={{ width: '50%', padding: 2 }}>
-                                                <Text style={{ fontSize: 8 }}>
-                                                    {new Date('1970-01-01T' + s.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} - 
-                                                    {new Date('1970-01-01T' + s.endTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
-                                                </Text>
-                                             </View>
-                                         </View>
-                                     ))}
-                                     {(!group?.schedules || group.schedules.length === 0) && (
-                                         <View style={{ padding: 4 }}><Text style={{fontSize: 8}}>Por asignar</Text></View>
-                                     )}
+                                     {/* Simplified Schedule Display: Time Range Only (Monday Priority) */}
+                                     {(() => {
+                                         // Use strictly COURSE schedules as requested
+                                         const schedules = course?.schedules;
+                                         if (schedules && schedules.length > 0) {
+                                             // User requested specifically Monday's schedule as reference
+                                             const s = schedules.find((sch: any) => sch.dayOfWeek === 'MONDAY') || schedules[0];
+                                             return (
+                                                  <View style={{ padding: 5, justifyContent: 'center', alignItems: 'center' }}>
+                                                      <Text style={styles.value}>
+                                                          {new Date(s.startTime).getUTCHours().toString().padStart(2, '0')}:{new Date(s.startTime).getUTCMinutes().toString().padStart(2, '0')} - {new Date(s.endTime).getUTCHours().toString().padStart(2, '0')}:{new Date(s.endTime).getUTCMinutes().toString().padStart(2, '0')}
+                                                      </Text>
+                                                  </View>
+                                             );
+                                         }
+                                         return (
+                                              <View style={{ padding: 5, justifyContent: 'center', alignItems: 'center' }}>
+                                                  <Text style={{fontSize: 8}}>POR ASIGNAR</Text>
+                                              </View>
+                                         );
+                                     })()}
                                 </View>
                             </View>
 
@@ -314,15 +324,10 @@ const EnrollmentPDF = ({ data, credentials }: EnrollmentPDFProps) => {
 
                         {/* RIGHT COLUMN (Photo) */}
                          <View style={{ width: '20%', padding: 5, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderColor: '#000' }}>
-                            {user?.profileImageUrl ? (
-                                <Image src={user.profileImageUrl} style={{ width: 80, height: 100, objectFit: 'cover' }} />
-                            ) : (
-                                <View style={styles.photoPlaceholder}>
-                                    <Text style={{ textAlign: 'center', fontSize: 8, color: '#aaa', fontFamily: 'Helvetica-Bold' }}>
-                                        PEGAR{'\n'}FOTO 4x4{'\n'}FONDO ROJO
-                                    </Text>
-                                </View>
-                            )}
+                            <Image 
+                                src={user?.profileImageUrl || `${window.location.origin}/assets/user-silhouette.png`} 
+                                style={{ width: 80, height: 100, objectFit: 'cover' }} 
+                            />
                         </View>
                     </View>
 
@@ -382,11 +387,11 @@ const EnrollmentPDF = ({ data, credentials }: EnrollmentPDFProps) => {
                 </View>
                 
                 {/* Generated By Footer */}
-                {createdBy && (
-                    <Text style={{ fontSize: 8, textAlign: 'left', marginTop: 10, color: '#666' }}>
-                        Generado por: {createdBy.firstName} {createdBy.paternalSurname} el {new Date(data.createdAt).toLocaleDateString()} a las {new Date(data.createdAt).toLocaleTimeString()}
+                <View style={{ marginTop: 20, paddingTop: 5, borderTopWidth: 1, borderColor: '#ccc' }}>
+                    <Text style={{ fontSize: 9, textAlign: 'right', color: '#444' }}>
+                        Generado por: {createdBy ? `${createdBy.firstName} ${createdBy.paternalSurname}` : 'Sistema'} — Fecha de emisión: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
                     </Text>
-                )}
+                </View>
 
                 {/* CREDENTIALS SECTION (Requested to be added) */}
                 {credentials && credentials.password && (

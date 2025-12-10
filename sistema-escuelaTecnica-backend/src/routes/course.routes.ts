@@ -12,14 +12,15 @@ import {
 const router = Router();
 
 // Courses
-router.get('/courses', getCourses);
-router.get('/courses/:id', getCourseById);
-router.post('/courses', upload.single('image'), createCourse);
-router.put('/courses/:id', upload.single('image'), updateCourse);
-router.delete('/courses/:id', deleteCourse);
+// Courses
+router.get('/', getCourses);
+router.get('/:id', getCourseById);
+router.post('/', upload.single('image'), createCourse);
+router.put('/:id', upload.single('image'), updateCourse);
+router.delete('/:id', deleteCourse);
 
 // Levels (Nested under courses usually, but here flat for simplicity in router definition, though logic requires courseId)
-router.post('/courses/:courseId/levels', createLevel);
+router.post('/:courseId/levels', createLevel);
 
 
 

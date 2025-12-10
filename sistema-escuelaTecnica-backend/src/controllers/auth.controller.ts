@@ -3,11 +3,15 @@ import prisma from '../utils/prisma.js';
 import { comparePassword, generateToken, hashPassword } from '../utils/auth.utils.js';
 
 export const login = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
+    }
 
     try {
         const user = await prisma.user.findUnique({
-            where: { email },
+            where: { username },
             include: {
                 userRoles: {
                     include: {
@@ -18,7 +22,7 @@ export const login = async (req: Request, res: Response) => {
         });
 
         if (!user || !user.isActive || !user.passwordHash) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
         const isValidPassword = await comparePassword(password, user.passwordHash);

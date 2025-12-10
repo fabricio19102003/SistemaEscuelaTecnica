@@ -74,6 +74,7 @@ export const createStudent = async (req: Request, res: Response) => {
             const newUser = await tx.user.create({
                 data: {
                     email,
+                    username: `${firstName.charAt(0).toUpperCase()}${paternalSurname.replace(/\s+/g, '').toUpperCase()}${Math.floor(100 + Math.random() * 900)}`,
                     passwordHash: hashedPassword,
                     firstName,
                     paternalSurname: paternalSurname || '', // Ensure not null if schema requires it
@@ -146,6 +147,7 @@ export const createStudent = async (req: Request, res: Response) => {
                     const newGuardianUser = await tx.user.create({
                         data: {
                             email: guardian.email,
+                            username: `${guardian.firstName.charAt(0).toUpperCase()}${guardian.paternalSurname.replace(/\s+/g, '').toUpperCase()}${Math.floor(100 + Math.random() * 900)}`,
                             passwordHash: guardianPasswordHash,
                             firstName: guardian.firstName,
                             paternalSurname: guardian.paternalSurname,
