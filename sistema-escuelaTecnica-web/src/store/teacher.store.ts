@@ -1,90 +1,140 @@
 import { create } from 'zustand';
-import { teacherService } from '../services/api/teacher.service';
+import {
+    getMyCourses,
+    getMyCourseStudents,
+    getTeachers,
+    getTeacherById,
+    createTeacher,
+    updateTeacher,
+    deleteTeacher,
+    type TeacherAssignment,
+    type TeacherStudent
+} from '../services/teacher.service';
 import type { Teacher } from '../types/teacher.types';
 
 interface TeacherState {
     teachers: Teacher[];
     selectedTeacher: Teacher | null;
+    myCourses: TeacherAssignment[];
+    selectedCourseStudents: TeacherStudent[];
     isLoading: boolean;
     error: string | null;
 
     fetchTeachers: () => Promise<void>;
-    fetchTeacherById: (id: string) => Promise<void>;
+    fetchTeacherById: (id: string | number) => Promise<void>;
     createTeacher: (data: FormData) => Promise<void>;
-    updateTeacher: (id: string, data: FormData) => Promise<void>;
-    deleteTeacher: (id: string) => Promise<void>;
-    clearError: () => void;
-    setSelectedTeacher: (teacher: Teacher | null) => void;
+    updateTeacher: (id: string | number, data: FormData) => Promise<void>;
+    fetchMyCourses: () => Promise<void>;
+    fetchCourseStudents: (groupId: number) => Promise<void>;
+    deleteTeacher: (id: string | number) => Promise<void>;
+    clearSelectedCourse: () => void;
 }
 
 export const useTeacherStore = create<TeacherState>((set) => ({
     teachers: [],
     selectedTeacher: null,
+    myCourses: [],
+    selectedCourseStudents: [],
     isLoading: false,
     error: null,
 
     fetchTeachers: async () => {
         set({ isLoading: true, error: null });
         try {
-            const teachers = await teacherService.getAll();
-            set({ teachers, isLoading: false });
+            const teachers = await getTeachers();
+            set({ teachers: teachers || [], isLoading: false });
         } catch (error: any) {
-            set({ error: error.response?.data?.message || 'Error fetching teachers', isLoading: false });
+            set({
+                error: error.response?.data?.message || 'Error al cargar docentes',
+                isLoading: false,
+                teachers: []
+            });
         }
     },
 
-    fetchTeacherById: async (id: string) => {
-        set({ isLoading: true, error: null });
+    fetchTeacherById: async (id: string | number) => {
+        set({ isLoading: true, error: null, selectedTeacher: null });
         try {
-            const teacher = await teacherService.getById(id);
+            const teacher = await getTeacherById(id);
             set({ selectedTeacher: teacher, isLoading: false });
         } catch (error: any) {
-            set({ error: error.response?.data?.message || 'Error fetching teacher', isLoading: false });
+            set({
+                error: error.response?.data?.message || 'Error al cargar el docente',
+                isLoading: false
+            });
         }
     },
 
     createTeacher: async (data: FormData) => {
         set({ isLoading: true, error: null });
         try {
-            const newTeacher = await teacherService.create(data);
-            set((state) => ({
-                teachers: [newTeacher, ...state.teachers],
-                isLoading: false
-            }));
+            await createTeacher(data);
+            set({ isLoading: false });
+            // Optionally refetch teachers list if needed, or handle in component
         } catch (error: any) {
-            set({ error: error.response?.data?.message || 'Error creating teacher', isLoading: false });
+            set({
+                error: error.response?.data?.message || 'Error al crear docente',
+                isLoading: false
+            });
+            throw error; // Re-throw to handle success/error in component
+        }
+    },
+
+    updateTeacher: async (id: string | number, data: FormData) => {
+        set({ isLoading: true, error: null });
+        try {
+            await updateTeacher(id, data);
+            set({ isLoading: false });
+        } catch (error: any) {
+            set({
+                error: error.response?.data?.message || 'Error al actualizar docente',
+                isLoading: false
+            });
             throw error;
         }
     },
 
-    updateTeacher: async (id: string, data: FormData) => {
+    fetchMyCourses: async () => {
         set({ isLoading: true, error: null });
         try {
-            const updatedTeacher = await teacherService.update(id, data);
-            set((state) => ({
-                teachers: state.teachers.map((t) => (String(t.id) === id ? updatedTeacher : t)),
-                selectedTeacher: updatedTeacher,
-                isLoading: false
-            }));
+            const courses = await getMyCourses();
+            set({ myCourses: courses, isLoading: false });
         } catch (error: any) {
-            set({ error: error.response?.data?.message || 'Error updating teacher', isLoading: false });
-            throw error;
+            set({
+                error: error.response?.data?.message || 'Error al cargar mis cursos',
+                isLoading: false
+            });
         }
     },
 
-    deleteTeacher: async (id: string) => {
-        set({ isLoading: true, error: null });
+    fetchCourseStudents: async (groupId: number) => {
+        set({ isLoading: true, error: null, selectedCourseStudents: [] });
         try {
-            await teacherService.delete(id);
-            set((state) => ({
-                teachers: state.teachers.filter((t) => String(t.id) !== id),
-                isLoading: false
-            }));
+            const students = await getMyCourseStudents(groupId);
+            set({ selectedCourseStudents: students, isLoading: false });
         } catch (error: any) {
-            set({ error: error.response?.data?.message || 'Error deleting teacher', isLoading: false });
+            set({
+                error: error.response?.data?.message || 'Error al cargar estudiantes del curso',
+                isLoading: false
+            });
         }
     },
 
-    clearError: () => set({ error: null }),
-    setSelectedTeacher: (teacher) => set({ selectedTeacher: teacher }),
+    deleteTeacher: async (id: string | number) => {
+        set({ isLoading: true, error: null });
+        try {
+            await deleteTeacher(id);
+            set(state => ({
+                teachers: state.teachers.filter(t => t.id !== Number(id)), // Ensure id comparison works if string/number mismatch
+                isLoading: false
+            }));
+        } catch (error: any) {
+            set({
+                error: error.response?.data?.message || 'Error al eliminar docente',
+                isLoading: false
+            });
+        }
+    },
+
+    clearSelectedCourse: () => set({ selectedCourseStudents: [] })
 }));

@@ -4,13 +4,20 @@ import {
     getTeachers,
     getTeacherById,
     updateTeacher,
-    deleteTeacher
-} from '../controllers/teacher.controller.js'; // Note: Ensure extension is correct for your config (usually .js in imports if using ESM in TS/Node setup, or try without if standard)
-// Checking other files... student.routes.ts probably uses .js if "type":"module" in package.json or standard ts-node.
-// Let's assume .js for now based on previous controller imports I saw.
+    deleteTeacher,
+    getTeacherAssignments,
+    getGroupEnrollments
+} from '../controllers/teacher.controller.js';
+import { authenticateJWT } from '../middleware/auth.middleware.js';
 import { upload } from '../middleware/upload.middleware.js';
 
 const router = Router();
+
+// Teacher portal routes
+router.get('/assignments/my-courses', authenticateJWT, getTeacherAssignments);
+router.get('/assignments/:groupId/students', authenticateJWT, getGroupEnrollments);
+
+// Admin routes
 
 router.get('/', getTeachers);
 router.get('/:id', getTeacherById);

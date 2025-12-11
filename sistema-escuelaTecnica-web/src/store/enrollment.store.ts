@@ -11,6 +11,7 @@ interface EnrollmentState {
     fetchEnrollmentById: (id: number) => Promise<void>;
     createEnrollment: (data: any) => Promise<any>;
     deleteEnrollment: (id: number) => Promise<void>;
+    fetchEnrollmentReport: (filters: { courseId?: number, year?: string, academicPeriod?: string }) => Promise<any[]>;
 }
 
 export const useEnrollmentStore = create<EnrollmentState>((set) => ({
@@ -58,6 +59,19 @@ export const useEnrollmentStore = create<EnrollmentState>((set) => ({
                 enrollments: state.enrollments.filter(e => e.id !== id),
                 isLoading: false
             }));
+        } catch (error: any) {
+            set({ error: error.message, isLoading: false });
+            throw error;
+        }
+    },
+    fetchEnrollmentReport: async (filters: { courseId?: number, year?: string, academicPeriod?: string }) => {
+        set({ isLoading: true, error: null });
+        try {
+            // Lazy import to avoid circular dependencies if necessary, but here service is safe
+            const { getEnrollmentReport } = await import('../services/enrollment.service');
+            const data = await getEnrollmentReport(filters);
+            set({ isLoading: false });
+            return data;
         } catch (error: any) {
             set({ error: error.message, isLoading: false });
             throw error;

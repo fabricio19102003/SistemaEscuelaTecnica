@@ -6,7 +6,7 @@ import api from '../../services/api/axios';
 import { useAuthStore } from '../../store/auth.store';
 
 const loginSchema = z.object({
-    email: z.string().email('Invalid email address'),
+    identifier: z.string().min(1, 'Email or Username is required'),
     password: z.string().min(1, 'Password is required'),
 });
 
@@ -38,7 +38,7 @@ const LoginPage = () => {
             <h2 className="text-3xl font-bold text-center mb-8 text-white tracking-tight">Iniciar Sesión</h2>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-300">Correo Electrónico</label>
+                    <label className="block text-sm font-medium text-gray-300">Usuario o Correo</label>
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg className="h-5 w-5 text-gray-400 group-focus-within:text-blue-400 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -47,13 +47,13 @@ const LoginPage = () => {
                             </svg>
                         </div>
                         <input
-                            type="email"
-                            {...register('email')}
+                            type="text"
+                            {...register('identifier')}
                             className="block w-full pl-10 pr-3 py-3 border border-gray-600/50 rounded-xl leading-5 bg-white/5 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 sm:text-sm transition-all duration-200 backdrop-blur-sm"
-                            placeholder="admin@escuelatecnica.com"
+                            placeholder="Usuario o correo electrónico"
                         />
                     </div>
-                    {errors.email && <p className="text-red-400 text-xs mt-1 font-medium ml-1">{errors.email.message}</p>}
+                    {errors.identifier && <p className="text-red-400 text-xs mt-1 font-medium ml-1">{errors.identifier.message}</p>}
                 </div>
 
                 <div className="space-y-2">

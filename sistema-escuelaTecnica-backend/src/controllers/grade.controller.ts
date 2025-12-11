@@ -179,12 +179,27 @@ export const saveGrades = async (req: Request, res: Response) => {
     console.log('--- SAVE GRADES REQUEST ---');
     console.log('Enrollment ID:', enrollmentId);
     console.log('Grades Payload:', JSON.stringify(grades, null, 2));
-    console.log('User ID:', (req as any).user?.id);
+
+    const userId = (req as any).user?.id;
+    console.log('User ID:', userId);
 
     try {
         if (!enrollmentId || !Array.isArray(grades)) {
             console.error('Invalid data: enrollmentId or grades array missing');
             return res.status(400).json({ message: 'Datos inválidos' });
+        }
+
+        // Find teacher associated with user to correctly link recordedBy
+        let recorderId: number | null = null;
+        if (userId) {
+            const teacher = await prisma.teacher.findUnique({
+                where: { userId: Number(userId) }
+            });
+            if (teacher) {
+                recorderId = teacher.id;
+            } else {
+                console.warn(`User ${userId} is saving grades but has no associated Teacher profile. recordedBy will be null.`);
+            }
         }
 
         // Transactional update
@@ -218,11 +233,11 @@ export const saveGrades = async (req: Request, res: Response) => {
                     await tx.grade.update({
                         where: { id: existing.id },
                         data: {
-                            progressTest: gradeItem.progressTest ? Number(gradeItem.progressTest) : null,
-                            classPerformance: gradeItem.classPerformance ? Number(gradeItem.classPerformance) : null,
+                            progressTest: gradeItem.progressTest !== undefined && gradeItem.progressTest !== null ? Number(gradeItem.progressTest) : null,
+                            classPerformance: gradeItem.classPerformance !== undefined && gradeItem.classPerformance !== null ? Number(gradeItem.classPerformance) : null,
                             gradeValue: finalScore,
                             comments: gradeItem.comments,
-                            recordedBy: (req as any).user?.id ?? null
+                            recordedBy: recorderId
                         }
                     });
                 } else {
@@ -232,13 +247,13 @@ export const saveGrades = async (req: Request, res: Response) => {
                             enrollmentId: Number(enrollmentId),
                             evaluationName: gradeItem.type,
                             evaluationType: gradeItem.type as EvaluationType,
-                            progressTest: gradeItem.progressTest ? Number(gradeItem.progressTest) : null,
-                            classPerformance: gradeItem.classPerformance ? Number(gradeItem.classPerformance) : null,
+                            progressTest: gradeItem.progressTest !== undefined && gradeItem.progressTest !== null ? Number(gradeItem.progressTest) : null,
+                            classPerformance: gradeItem.classPerformance !== undefined && gradeItem.classPerformance !== null ? Number(gradeItem.classPerformance) : null,
                             gradeValue: finalScore || 0,
                             comments: gradeItem.comments,
                             evaluationDate: new Date(),
                             maxGrade: 100,
-                            recordedBy: (req as any).user?.id ?? null
+                            recordedBy: recorderId
                         }
                     });
                 }
@@ -268,6 +283,12 @@ export const getReportCardData = async (req: Request, res: Response) => {
                 },
                 group: {
                     include: {
+                        teacher: {
+                            include: {
+                                user: true
+                            }
+                        },
+                        schedules: true,
                         level: {
                             include: {
                                 course: {
@@ -297,12 +318,57 @@ export const getReportCardData = async (req: Request, res: Response) => {
         const coreGrades = enrollment.grades.filter(g => coreCompetencies.includes(g.evaluationType));
 
         const total = coreGrades.reduce((sum, g) => sum + Number(g.gradeValue), 0);
-        const average = coreGrades.length > 0 ? total / coreGrades.length : 0;
+        const average = coreGrades.length > 0 ? (total / 6) : 0; // Divide by 6 fixed competencies for correct average
 
-        res.json({
+        // Format Period
+        const startYear = new Date(enrollment.group.startDate).getFullYear();
+        const period = `GESTIÓN ${startYear}`;
+
+        // Format Schedule (Strictly Course schedule as requested)
+        const relevantSchedules = enrollment.group.level.course.schedules;
+
+        const formatTime = (date: Date | string) => {
+            if (date instanceof Date) {
+                // Extracts UTC HH:MM to avoid local timezone shifts (e.g., getting 04:00 for 08:00 stored as UTC)
+                const hours = date.getUTCHours().toString().padStart(2, '0');
+                const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+                return `${hours}:${minutes}`;
+            }
+            return String(date).substring(0, 5);
+        };
+
+        const scheduleString = [...new Set(relevantSchedules
+            .map(s => {
+                const startRaw = formatTime(s.startTime);
+                const endRaw = formatTime(s.endTime);
+                return `${startRaw} - ${endRaw}`;
+            }))]
+            .join(' / ');
+
+        // Format Names
+        const studentName = `${enrollment.student.user.firstName} ${enrollment.student.user.paternalSurname} ${enrollment.student.user.maternalSurname || ''}`.trim().toUpperCase();
+        const teacherName = enrollment.group.teacher
+            ? `${enrollment.group.teacher.user.firstName} ${enrollment.group.teacher.user.paternalSurname} ${enrollment.group.teacher.user.maternalSurname || ''}`.trim().toUpperCase()
+            : 'S/D';
+
+        const courseName = enrollment.group.level.course.name.toUpperCase();
+        const levelName = enrollment.group.level.name.toUpperCase();
+
+        const responseData = {
             ...enrollment,
-            calculatedAverage: average
-        });
+            studentName,
+            teacherName,
+            courseName,
+            levelName,
+            period,
+            schedule: scheduleString || 'POR DEFINIR',
+            groupName: enrollment.group.name,
+            finalScore: average, // Mapped to finalScore as expected by PDF
+            calculatedAverage: average,
+            passed: average >= 51
+        };
+
+        res.json(responseData);
 
     } catch (error) {
         console.error('Error fetching report card data:', error);

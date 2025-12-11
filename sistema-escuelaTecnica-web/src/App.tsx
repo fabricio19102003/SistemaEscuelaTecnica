@@ -27,22 +27,38 @@ import OfficialReportPage from './pages/grades/OfficialReportPage';
 import UserDashboardPage from './pages/users/UserDashboardPage';
 import UserFormPage from './pages/users/UserFormPage';
 // Protected Route Wrapper
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+const ProtectedRoute = ({ children, allowedRoles }: { children: JSX.Element, allowedRoles?: string[] }) => {
+    const { isAuthenticated, user } = useAuthStore();
+    
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
+
+    if (allowedRoles && user) {
+        const hasRole = user.roles.some(role => allowedRoles.includes(role));
+        if (!hasRole) {
+            return <Navigate to="/dashboard" replace />; // Or unauthorized page
+        }
+    }
+
     return children;
 };
 
 // Public Route Wrapper (redirects to dashboard if already logged in)
 const PublicRoute = ({ children }: { children: JSX.Element }) => {
-    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const { isAuthenticated, user } = useAuthStore();
     if (isAuthenticated) {
+        if (user?.roles.includes('TEACHER')) {
+            return <Navigate to="/teacher" replace />;
+        }
         return <Navigate to="/dashboard" replace />;
     }
     return children;
 };
+
+import TeacherDashboardLayout from './layouts/TeacherDashboardLayout';
+import TeacherCoursesPage from './pages/teacher/TeacherCoursesPage';
+import TeacherCourseDetailPage from './pages/teacher/TeacherCourseDetailPage';
 
 function App() {
     return (
@@ -53,7 +69,24 @@ function App() {
                     <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
                 </Route>
 
-                {/* Protected Routes */}
+                {/* Teacher Routes */}
+                <Route path="/teacher" element={
+                    <ProtectedRoute allowedRoles={['TEACHER']}>
+                        <TeacherDashboardLayout />
+                    </ProtectedRoute>
+                }>
+                    {/* Module: My Courses (Students) */}
+                    <Route path="courses" element={<TeacherCoursesPage basePath="/teacher/courses" />} />
+                    <Route path="courses/:groupId" element={<TeacherCourseDetailPage defaultTab="students" />} />
+                    
+                    {/* Module: Grades (Enty) */}
+                    <Route path="grades" element={<TeacherCoursesPage basePath="/teacher/grades" />} />
+                    <Route path="grades/:groupId" element={<TeacherCourseDetailPage defaultTab="grades" />} />
+
+                    <Route index element={<Navigate to="courses" replace />} />
+                </Route>
+
+                {/* Admin/Staff Protected Routes */}
                  <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                     <Route index element={<div className="text-gray-600">Dashboard Overview Content (Widgets go here)</div>} />
                     <Route path="students" element={<StudentListPage />} />

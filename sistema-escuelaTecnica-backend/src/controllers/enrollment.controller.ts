@@ -358,3 +358,93 @@ export const deleteEnrollment = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error al eliminar matrícula' });
     }
 };
+
+export const getEnrollmentReport = async (req: Request, res: Response) => {
+    try {
+        const { period, courseId, year, academicPeriod } = req.query;
+
+        const whereClause: any = {};
+        const groupWhere: any = {};
+
+        if (courseId) {
+            groupWhere.level = { courseId: Number(courseId) };
+        }
+
+        // Filter by Year (Gestión)
+        if (year) {
+            const startOfYear = new Date(`${year}-01-01`);
+            const endOfYear = new Date(`${year}-12-31`);
+            groupWhere.startDate = {
+                gte: startOfYear,
+                lte: endOfYear
+            };
+        }
+
+        // Filter by Academic Period (1 or 2)
+        // If year is selected, restricting to that year's semesters.
+        // If no year selected, this might be ambiguous, but we'll assume current year or just month filter if Prisma allowed simple month filtering (which it doesn't easily in simple where).
+        // Let's enforce that Period filtering relies on the StartDate range.
+        if (year && academicPeriod) {
+            const y = Number(year);
+            if (String(academicPeriod) === '1') {
+                groupWhere.startDate = {
+                    gte: new Date(`${y}-01-01`),
+                    lte: new Date(`${y}-06-30`)
+                };
+            } else if (String(academicPeriod) === '2') {
+                groupWhere.startDate = {
+                    gte: new Date(`${y}-07-01`),
+                    lte: new Date(`${y}-12-31`)
+                };
+            }
+        }
+
+        // Legacy period string filter (keep if needed or remove if replaced)
+        // Keeping it strictly for backward compatibility if the frontend still sends 'period' as a string search
+        if (period && !year && !academicPeriod) {
+            // Filter by period in group code or name
+            groupWhere.OR = [
+                { code: { contains: String(period) } },
+                { name: { contains: String(period) } }
+            ];
+        }
+
+        if (Object.keys(groupWhere).length > 0) {
+            whereClause.group = groupWhere;
+        }
+
+        const enrollments = await prisma.enrollment.findMany({
+            where: whereClause,
+            include: {
+                student: {
+                    include: {
+                        user: true
+                    }
+                },
+                group: {
+                    include: {
+                        level: {
+                            include: {
+                                course: true
+                            }
+                        },
+                        teacher: {
+                            include: {
+                                user: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: [
+                { group: { level: { course: { name: 'asc' } } } }, // Group by course name
+                { student: { user: { paternalSurname: 'asc' } } }  // Then alphabetical by student
+            ]
+        });
+
+        res.json(enrollments);
+    } catch (error) {
+        console.error('Error fetching enrollment report:', error);
+        res.status(500).json({ message: 'Error al generar el reporte de matriculas' });
+    }
+};

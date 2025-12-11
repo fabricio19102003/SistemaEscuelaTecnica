@@ -1,41 +1,15 @@
 import { create } from 'zustand';
-import axios from '../services/api/axios';
-
-interface Grade {
-    id: number;
-    enrollmentId: number;
-    evaluationType: string;
-    gradeValue: number;
-    progressTest?: number;
-    classPerformance?: number;
-    comments: string;
-}
-
-interface Enrollment {
-    id: number;
-    student: {
-        id: number;
-        user: {
-            firstName: string;
-            paternalSurname: string;
-            maternalSurname: string;
-        }
-    };
-    group?: {
-        id: number;
-        level?: {
-            id: number;
-            course?: {
-                id: number;
-                name: string;
-            }
-        }
-    };
-    grades: Grade[];
-}
+import {
+    getGradesByGroup,
+    getGradesByCourse,
+    getAllGradesStats,
+    saveGrades,
+    getGroupReport,
+    type EnrollmentWithGrades
+} from '../services/grade.service';
 
 interface GradeState {
-    enrollments: Enrollment[];
+    enrollments: EnrollmentWithGrades[];
     loading: boolean;
     error: string | null;
     reportData: any | null;
@@ -50,12 +24,13 @@ export const useGradeStore = create<GradeState>((set) => ({
     enrollments: [],
     loading: false,
     error: null,
+    reportData: null,
 
     fetchGradesByGroup: async (groupId: number) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.get(`/grades/group/${groupId}`);
-            set({ enrollments: response.data, loading: false });
+            const enrollments = await getGradesByGroup(groupId);
+            set({ enrollments, loading: false });
         } catch (error: any) {
             set({
                 error: error.response?.data?.message || 'Error al cargar calificaciones',
@@ -67,8 +42,8 @@ export const useGradeStore = create<GradeState>((set) => ({
     fetchGradesByCourse: async (courseId: number) => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.get(`/grades/course/${courseId}`);
-            set({ enrollments: response.data, loading: false });
+            const enrollments = await getGradesByCourse(courseId);
+            set({ enrollments, loading: false });
         } catch (error: any) {
             set({
                 error: error.response?.data?.message || 'Error al cargar calificaciones del curso',
@@ -80,8 +55,8 @@ export const useGradeStore = create<GradeState>((set) => ({
     fetchAllGrades: async () => {
         set({ loading: true, error: null });
         try {
-            const response = await axios.get('/grades/stats/all');
-            set({ enrollments: response.data, loading: false });
+            const enrollments = await getAllGradesStats();
+            set({ enrollments, loading: false });
         } catch (error: any) {
             set({
                 error: error.response?.data?.message || 'Error al cargar todas las calificaciones',
@@ -93,9 +68,9 @@ export const useGradeStore = create<GradeState>((set) => ({
     saveGrades: async (enrollmentId: number, grades: any[]) => {
         set({ loading: true, error: null });
         try {
-            await axios.post('/grades/save', { enrollmentId, grades });
+            await saveGrades(enrollmentId, grades);
             set({ loading: false });
-            // Optionally refresh or update local state
+            // Optionally refresh or update local state - dependent on UI needs
         } catch (error: any) {
             set({
                 error: error.response?.data?.message || 'Error al guardar calificaciones',
@@ -105,12 +80,11 @@ export const useGradeStore = create<GradeState>((set) => ({
         }
     },
 
-    reportData: null,
     fetchGroupReport: async (groupId: number) => {
         set({ loading: true, error: null, reportData: null });
         try {
-            const response = await axios.get(`/grades/report/group/${groupId}`);
-            set({ reportData: response.data, loading: false });
+            const reportData = await getGroupReport(groupId);
+            set({ reportData, loading: false });
         } catch (error: any) {
             set({
                 error: error.response?.data?.message || 'Error al cargar reporte',

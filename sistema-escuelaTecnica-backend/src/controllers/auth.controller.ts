@@ -3,15 +3,20 @@ import prisma from '../utils/prisma.js';
 import { comparePassword, generateToken, hashPassword } from '../utils/auth.utils.js';
 
 export const login = async (req: Request, res: Response) => {
-    const { username, password } = req.body;
+    const { identifier, password } = req.body;
 
-    if (!username || !password) {
-        return res.status(400).json({ message: 'Username and password are required' });
+    if (!identifier || !password) {
+        return res.status(400).json({ message: 'Username/Email and password are required' });
     }
 
     try {
-        const user = await prisma.user.findUnique({
-            where: { username },
+        const user = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { username: identifier },
+                    { email: identifier }
+                ]
+            },
             include: {
                 userRoles: {
                     include: {

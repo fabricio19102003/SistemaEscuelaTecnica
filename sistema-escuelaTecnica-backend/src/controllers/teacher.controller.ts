@@ -313,3 +313,103 @@ export const deleteTeacher = async (req: Request, res: Response) => {
         }
     }
 };
+
+export const getTeacherAssignments = async (req: Request, res: Response) => {
+    try {
+        // Find teacher record for logged in user
+        const teacher = await prisma.teacher.findUnique({
+            where: { userId: (req as any).user.id },
+            include: { user: true }
+        });
+
+        if (!teacher) {
+            return res.status(404).json({ message: 'Teacher profile not found for this user' });
+        }
+
+        const groups = await prisma.group.findMany({
+            where: {
+                teacherId: teacher.id,
+                status: { not: 'CANCELLED' }
+            },
+            include: {
+                level: {
+                    include: {
+                        course: true
+                    }
+                },
+                _count: {
+                    select: { enrollments: true }
+                }
+            },
+            orderBy: {
+                startDate: 'desc'
+            }
+        });
+
+        res.json(groups);
+    } catch (error) {
+        console.error('Error fetching teacher assignments:', error);
+        res.status(500).json({ message: 'Error fetching assignments' });
+    }
+};
+
+export const getGroupEnrollments = async (req: Request, res: Response) => {
+    const { groupId } = req.params;
+    try {
+        // Find teacher record for logged in user
+        const teacher = await prisma.teacher.findUnique({
+            where: { userId: (req as any).user.id }
+        });
+
+        if (!teacher) {
+            return res.status(404).json({ message: 'Teacher profile not found' });
+        }
+
+        // Verify group belongs to teacher
+        const group = await prisma.group.findFirst({
+            where: {
+                id: Number(groupId),
+                teacherId: teacher.id
+            }
+        });
+
+        if (!group) {
+            return res.status(403).json({ message: 'Not authorized to view this group or group not found' });
+        }
+
+        const enrollments = await prisma.enrollment.findMany({
+            where: {
+                groupId: Number(groupId),
+                status: 'ACTIVE'
+            },
+            include: {
+                student: {
+                    include: {
+                        user: {
+                            select: {
+                                firstName: true,
+                                paternalSurname: true,
+                                maternalSurname: true,
+                                email: true,
+                                phone: true,
+                                profileImageUrl: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                student: {
+                    user: {
+                        paternalSurname: 'asc'
+                    }
+                }
+            }
+        });
+
+        res.json(enrollments);
+    } catch (error) {
+        console.error('Error fetching group enrollments:', error);
+        res.status(500).json({ message: 'Error fetching enrollments' });
+    }
+};

@@ -1,13 +1,14 @@
-import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import logoUap from '../../assets/images/logo_uap.png';
 import logoCentro from '../../assets/images/logo_centro.png';
 
-// Register fonts if needed, but standard Helvetica is fine for now.
-
 const styles = StyleSheet.create({
     page: {
-        padding: 30,
-        fontFamily: 'Helvetica',
+        paddingTop: '2cm', // Reduced to 2cm as requested
+        paddingBottom: '1cm',
+        paddingLeft: '2.54cm',
+        paddingRight: '2.54cm',
+        fontFamily: 'Times-Roman',
         fontSize: 10,
         backgroundColor: '#FFFFFF',
     },
@@ -15,18 +16,18 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         marginBottom: 10,
-        border: '2pt solid #000',
-        height: 80,
+        border: '1pt solid #000',
+        height: 90,
     },
     logoContainer: {
-        width: 80,
+        width: 90,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#90EE90',
         padding: 5,
     },
     logo: {
-        width: 60,
+        width: 70,
         height: 'auto',
     },
     headerCenter: {
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
     // Student Info
     studentInfo: {
         marginBottom: 0,
-        border: '2pt solid #000',
+        border: '1pt solid #000',
         borderTop: 'none',
     },
     infoRow: {
@@ -71,7 +72,7 @@ const styles = StyleSheet.create({
     table: {
         width: '100%',
         marginTop: 0,
-        border: '2pt solid #000',
+        border: '1pt solid #000',
         borderTop: 'none',
     },
     tableHeader: {
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
         borderBottom: '1pt solid #000',
     },
     skillHeader: {
-        backgroundColor: '#FFA500',
+        backgroundColor: '#FFA500', 
         padding: 5,
         fontWeight: 'bold',
         textAlign: 'center',
@@ -103,98 +104,120 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderRight: '1pt solid #000',
-        fontSize: 14,
         fontWeight: 'bold',
     },
+    // Styles update
     descCell: {
-        width: '20%',
+        width: '30%', // Increased from 20%
         padding: 5,
         fontSize: 9,
         borderRight: '1pt solid #000',
         justifyContent: 'center',
     },
     commentCell: {
-        width: '65%',
+        width: '55%', // Decreased from 65%
         padding: 5,
         fontSize: 9,
         minHeight: 40,
     },
+    // Missing styles added
     overallRow: {
         flexDirection: 'row',
-        backgroundColor: '#FFA500',
         borderBottom: '1pt solid #000',
         padding: 5,
+        backgroundColor: '#E0E0E0', 
     },
-    // Status
     statusSection: {
-        marginTop: 10,
-        border: '2pt solid #000',
+        marginTop: 20,
+        marginBottom: 20,
         padding: 10,
+        border: '1pt solid #000',
         alignItems: 'center',
     },
     statusText: {
         fontSize: 12,
         fontWeight: 'bold',
         marginBottom: 5,
+        textAlign: 'center',
     },
     passToText: {
-        fontSize: 14,
-        fontWeight: 'bold',
+        fontSize: 11,
+        textAlign: 'center',
     },
-    // Signatures
     signatures: {
         flexDirection: 'row',
-        marginTop: 30,
-        border: '2pt solid #000',
+        marginTop: 45,
+        width: '100%',
     },
     sigCell: {
         width: '50%',
-        height: 80,
-        borderRight: '1pt solid #000',
-        justifyContent: 'flex-end',
+        paddingHorizontal: 20,
         alignItems: 'center',
-        paddingBottom: 10,
     },
     sigLine: {
-        borderTop: '2pt dotted #000',
-        width: '80%',
+        borderTop: '1pt dotted #000',
+        paddingTop: 5,
         textAlign: 'center',
+        width: '80%',
+        fontSize: 10,
+    },
+    footer: {
+        position: 'absolute',
+        bottom: 30,
+        left: 30,
+        right: 30,
+        fontSize: 8,
+        textAlign: 'center',
+        color: '#666',
+        borderTop: '1pt solid #ccc',
         paddingTop: 5,
     },
 });
 
-const ReportCardPDF = ({ data }: { data: any }) => {
-    const { student, group, grades, calculatedAverage } = data;
-    const { user } = student;
-    const fullName = `${user.firstName} ${user.paternalSurname} ${user.maternalSurname || ''}`;
-    const courseName = group?.level?.course?.name || 'N/A';
-    const period = new Date().getFullYear().toString(); // Could be improved
-    const date = new Date().toLocaleDateString();
+interface ReportCardPDFProps {
+    data: any;
+    userWhoGenerated?: string;
+    clientIp?: string;
+}
 
-    const getGrade = (type: string) => {
-        const g = grades.find((gr: any) => gr.evaluationType === type);
-        return {
-            score: g ? Number(g.gradeValue) : 0,
-            comments: g?.comments || ''
-        };
+const ReportCardPDF: React.FC<ReportCardPDFProps> = ({ data, userWhoGenerated, clientIp }) => {
+    const currentDate = new Date().toLocaleDateString('es-ES');
+    const currentTime = new Date().toLocaleTimeString('es-ES');
+
+    // Extract data for display
+    const studentName = data.studentName || 'ESTUDIANTE';
+    const courseName = data.courseName || 'CURSO';
+    const levelName = data.levelName || '';
+    const teacherName = data.teacherName || '';
+    const period = data.period || '';
+    const schedule = data.schedule || '';
+
+    // Calculate or extract calculated items
+    const competencies = ['SPEAKING', 'LISTENING', 'READING', 'WRITING', 'VOCABULARY', 'GRAMMAR'];
+    
+    const getGrade = (comp: string) => {
+        if (!data.grades) return { score: 0, comments: '' };
+        const grade = data.grades.find((g: any) => g.evaluationType === comp);
+        return grade ? { score: grade.gradeValue, comments: grade.comments } : { score: 0, comments: '' };
     };
 
-    const competencies = ['SPEAKING', 'LISTENING', 'READING', 'WRITING', 'VOCABULARY', 'GRAMMAR'];
-
-    const passed = calculatedAverage >= 51;
+    const calculatedAverage = data.finalScore || 0;
+    // const passed = calculatedAverage >= 51; // This is used in the lower part of the file, assuming 'passed' is available in scope or needs to be calculated.
+    // Looking at line 162 in original file: passed ? ... 
+    // Usually passed is part of data or calculated. 
+    const passed = data.passed !== undefined ? data.passed : calculatedAverage >= 51;
 
     return (
         <Document>
-            <Page size="A4" style={styles.page}>
+            <Page size="LETTER" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.logoContainer}>
-                        {/* Use remote or base64 if local imports fail in dev, but imports usually work with vite */}
-                         <Image src={logoUap} style={styles.logo} />
+                        <Image src={logoUap} style={styles.logo} />
                     </View>
                     <View style={styles.headerCenter}>
-                        <Text style={styles.universityName}>AMAZONIC PANDO UNIVERSITY</Text>
-                        <Text style={styles.departmentName}>SPECIAL PROJECTS CENTER AND PERMANENT EDUCATION</Text>
+                        <Text style={styles.universityName}>UNIVERSIDAD AMAZÓNICA DE PANDO</Text>
+                        <Text style={styles.departmentName}>CENTRO DE IDIOMAS Y RECURSOS DIDÁCTICOS</Text>
                     </View>
                     <View style={styles.logoContainer}>
                         <Image src={logoCentro} style={styles.logo} />
@@ -205,28 +228,35 @@ const ReportCardPDF = ({ data }: { data: any }) => {
                 <View style={styles.studentInfo}>
                     <View style={styles.infoRow}>
                         <View style={[styles.infoCell, { width: '60%' }]}>
-                            <Text><Text style={styles.infoLabel}>Student's name: </Text>{fullName}</Text>
+                            <Text><Text style={styles.infoLabel}>Student: </Text>{studentName}</Text>
                         </View>
                         <View style={[styles.infoCell, { width: '40%', borderRight: 'none' }]}>
-                            <Text><Text style={styles.infoLabel}>Date: </Text>{date}</Text>
+                            <Text><Text style={styles.infoLabel}>Date: </Text>{currentDate}</Text>
+                        </View>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <View style={[styles.infoCell, { width: '50%' }]}>
+                            <Text><Text style={styles.infoLabel}>Course: </Text>{courseName} - {levelName}</Text>
+                        </View>
+                        <View style={[styles.infoCell, { width: '50%', borderRight: 'none' }]}>
+                            <Text><Text style={styles.infoLabel}>Period: </Text>{period}</Text>
                         </View>
                     </View>
                     <View style={[styles.infoRow, { borderBottom: 'none' }]}>
-                        <View style={[styles.infoCell, { width: '60%' }]}>
-                            <Text><Text style={styles.infoLabel}>Course: </Text>{courseName} / {group?.level?.name}</Text>
+                        <View style={[styles.infoCell, { width: '60%', borderRight: 'none' }]}>
+                            <Text><Text style={styles.infoLabel}>Teacher: </Text>{teacherName}</Text>
                         </View>
                          <View style={[styles.infoCell, { width: '40%', borderRight: 'none' }]}>
-                            <Text><Text style={styles.infoLabel}>Schedule: </Text>{/* Logic for schedule string */}</Text>
+                            <Text><Text style={styles.infoLabel}>Schedule: </Text>{schedule}</Text>
                         </View>
                     </View>
                 </View>
 
-                {/* Grades Table */}
                 <View style={styles.table}>
                     <View style={styles.tableHeader}>
-                        <Text style={[styles.th, { width: '20%' }]}>Skills</Text>
+                        <Text style={[styles.th, { width: '30%' }]}>Skills</Text>
                         <Text style={[styles.th, { width: '15%' }]}>Score</Text>
-                        <Text style={[styles.th, { width: '65%', borderRight: 'none' }]}>Teacher's comments</Text>
+                        <Text style={[styles.th, { width: '55%', borderRight: 'none' }]}>Teacher's comments</Text>
                     </View>
 
                     {competencies.map(comp => {
@@ -251,22 +281,23 @@ const ReportCardPDF = ({ data }: { data: any }) => {
                     })}
 
                     <View style={styles.overallRow}>
-                        <Text style={{ width: '20%', fontWeight: 'bold' }}>Overall performance</Text>
+                        <Text style={{ width: '30%', fontWeight: 'bold' }}>Overall performance</Text>
                         <Text style={{ width: '15%', textAlign: 'center', fontWeight: 'bold' }}>{Math.round(calculatedAverage)}</Text>
-                        <Text style={{ width: '65%', textAlign: 'right', paddingRight: 10 }}>Absences: {data.absences || 0}</Text>
+                        <Text style={{ width: '55%', textAlign: 'right', paddingRight: 10 }}>Absences: {data.absences || 0}</Text>
                     </View>
-                </View>
 
-                {/* Status */}
-                <View style={styles.statusSection}>
-                    <Text style={[styles.statusText, { color: passed ? '#000' : '#D32F2F' }]}>
-                        {passed ? '' : 'Repeat: You failed the course'}
-                    </Text>
-                    <Text style={styles.passToText}>
-                        Pass to: <Text style={{ color: passed ? '#388E3C' : '#D32F2F' }}>
-                            {passed ? 'PROXIMO NIVEL' : 'REPROBADO'}
+                    {/* Status merged into table */}
+                    {/* Status merged into table */}
+                    <View style={[styles.overallRow, { borderBottom: 'none', flexDirection: 'column', alignItems: 'center', padding: 2, backgroundColor: '#FFFFFF' }]}>
+                        <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 0, color: passed ? '#000' : '#D32F2F', textAlign: 'center' }}>
+                            {passed ? '' : 'Repeat: You failed the course'}
                         </Text>
-                    </Text>
+                        <Text style={{ fontSize: 11, textAlign: 'center' }}>
+                            Pass to: <Text style={{ color: passed ? '#388E3C' : '#D32F2F' }}>
+                                {passed ? 'PROXIMO NIVEL' : 'REPROBADO'}
+                            </Text>
+                        </Text>
+                    </View>
                 </View>
 
                 {/* Signatures */}
@@ -274,9 +305,14 @@ const ReportCardPDF = ({ data }: { data: any }) => {
                     <View style={styles.sigCell}>
                         <Text style={styles.sigLine}>Teacher's signature</Text>
                     </View>
-                    <View style={[styles.sigCell, { borderRight: 'none' }]}>
+                    <View style={styles.sigCell}>
                         <Text style={styles.sigLine}>Responsable's signatures</Text>
                     </View>
+                </View>
+
+                 {/* Footer */}
+                <View style={styles.footer}>
+                     <Text>Generado por: {userWhoGenerated} | Fecha: {currentDate} {currentTime} | IP: {clientIp} | El documento se generó desde el sistema de información Escuela Técnica de la U.A.P.</Text>
                 </View>
             </Page>
         </Document>

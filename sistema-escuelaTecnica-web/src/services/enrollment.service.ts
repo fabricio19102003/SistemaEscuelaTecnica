@@ -19,3 +19,8 @@ export const deleteEnrollment = async (id: number) => {
     const response = await api.delete(`/enrollments/${id}`);
     return response.data;
 };
+
+export const getEnrollmentReport = async (filters: { courseId?: number, year?: string, academicPeriod?: string }) => {
+    const response = await api.get('/enrollments/report', { params: filters });
+    return response.data;
+};
