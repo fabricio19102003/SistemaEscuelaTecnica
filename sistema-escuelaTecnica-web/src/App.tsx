@@ -26,6 +26,9 @@ import GradeStatsPage from './pages/grades/GradeStatsPage';
 import OfficialReportPage from './pages/grades/OfficialReportPage';
 import UserDashboardPage from './pages/users/UserDashboardPage';
 import UserFormPage from './pages/users/UserFormPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import StudentHistoryPage from './pages/students/StudentHistoryPage';
+
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }: { children: JSX.Element, allowedRoles?: string[] }) => {
     const { isAuthenticated, user } = useAuthStore();
@@ -90,10 +93,11 @@ function App() {
 
                 {/* Admin/Staff Protected Routes */}
                  <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                    <Route index element={<div className="text-gray-600">Dashboard Overview Content (Widgets go here)</div>} />
+                    <Route index element={<AdminDashboardPage />} />
                     <Route path="students" element={<StudentListPage />} />
-                <Route path="students/new" element={<StudentFormPage />} />
-                <Route path="students/:id/edit" element={<StudentFormPage />} />
+                    <Route path="students/new" element={<StudentFormPage />} />
+                    <Route path="students/:id" element={<StudentHistoryPage />} />
+                    <Route path="students/:id/edit" element={<StudentFormPage />} />
                 
                 <Route path="schools" element={<SchoolListPage />} />
                 <Route path="schools/new" element={<SchoolFormPage />} />

@@ -1,15 +1,17 @@
 import { create } from 'zustand';
 import { studentService } from '../services/api/student.service';
-import type { Student, CreateStudentDTO, UpdateStudentDTO } from '../types/student.types';
+import type { Student, CreateStudentDTO, UpdateStudentDTO, AcademicHistoryRecord } from '../types/student.types';
 
 interface StudentState {
     students: Student[];
     selectedStudent: Student | null;
+    academicHistory: AcademicHistoryRecord[];
     isLoading: boolean;
     error: string | null;
 
     fetchStudents: () => Promise<void>;
     fetchStudentById: (id: string) => Promise<void>;
+    fetchStudentHistory: (id: string) => Promise<void>;
     createStudent: (data: CreateStudentDTO | FormData) => Promise<void>;
     updateStudent: (id: string, data: UpdateStudentDTO | FormData) => Promise<void>;
     deleteStudent: (id: string) => Promise<void>;
@@ -20,6 +22,7 @@ interface StudentState {
 export const useStudentStore = create<StudentState>((set) => ({
     students: [],
     selectedStudent: null,
+    academicHistory: [],
     isLoading: false,
     error: null,
 
@@ -34,12 +37,22 @@ export const useStudentStore = create<StudentState>((set) => ({
     },
 
     fetchStudentById: async (id: string) => {
-        set({ isLoading: true, error: null });
+        set({ isLoading: true, error: null, selectedStudent: null }); // Clear previous student
         try {
             const student = await studentService.getById(id);
             set({ selectedStudent: student, isLoading: false });
         } catch (error: any) {
             set({ error: error.response?.data?.message || 'Error fetching student', isLoading: false });
+        }
+    },
+
+    fetchStudentHistory: async (id: string) => {
+        set({ isLoading: true, error: null, academicHistory: [] }); // Clear previous history
+        try {
+            const history = await studentService.getHistory(id);
+            set({ academicHistory: history, isLoading: false });
+        } catch (error: any) {
+            set({ error: error.response?.data?.message || 'Error fetching student history', isLoading: false });
         }
     },
 

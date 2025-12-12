@@ -728,6 +728,9 @@ enum EnrollmentGeneralStatus {
   ACTIVE
   INACTIVE
   GRADUATED
+  RETIRADO
+  ABANDONO
+  NO_INCORPORADO
 }
 
 enum GroupStatus {

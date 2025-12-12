@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `students` MODIFY `enrollment_status` ENUM('ACTIVE', 'INACTIVE', 'GRADUATED', 'RETIRADO', 'ABANDONO', 'NO_INCORPORADO') NOT NULL;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStudentStore } from '../../store/student.store';
-import { Plus, Search, Edit2, Trash2, GraduationCap } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, GraduationCap, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
@@ -129,6 +129,13 @@ const StudentListPage = () => {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <button 
+                                                        onClick={() => navigate(`${student.id}`)}
+                                                        className="p-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 rounded-lg transition-colors"
+                                                        title="Historial Académico"
+                                                    >
+                                                        <BookOpen size={18} />
+                                                    </button>
                                                     <button 
                                                         onClick={() => navigate(`${student.id}/edit`)}
                                                         className="p-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg transition-colors"

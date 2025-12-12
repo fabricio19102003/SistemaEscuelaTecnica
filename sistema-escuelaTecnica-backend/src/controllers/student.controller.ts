@@ -615,3 +615,76 @@ export const deleteStudent = async (req: Request, res: Response) => {
         }
     }
 };
+
+export const getStudentHistory = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const studentId = Number(id);
+
+        // 1. Get all enrollments for the student
+        const enrollments = await prisma.enrollment.findMany({
+            where: {
+                studentId: studentId,
+                status: { not: 'CANCELLED' } // Optionally exclude cancelled
+            },
+            include: {
+                group: {
+                    include: {
+                        level: {
+                            include: {
+                                course: true
+                            }
+                        }
+                    }
+                },
+                reportCards: {
+                    where: { status: 'APPROVED' }, // Mostly interested in final approved grades
+                    orderBy: { periodEnd: 'desc' },
+                    take: 1
+                },
+                certificates: true
+            },
+            orderBy: {
+                enrollmentDate: 'desc'
+            }
+        });
+
+        // 2. Format the history
+        const history = enrollments.map(enrollment => {
+            const course = enrollment.group.level.course;
+            const level = enrollment.group.level;
+            const reportCard = enrollment.reportCards[0];
+
+            let period = 'N/A';
+            if (reportCard && reportCard.periodName) {
+                period = reportCard.periodName;
+            } else {
+                const date = new Date(enrollment.enrollmentDate);
+                const month = date.getMonth() + 1; // 1-12
+                const year = date.getFullYear();
+                // Simple logic: Period 1 (Jan-Jun), Period 2 (Jul-Dec)
+                period = month <= 6 ? `1/${year}` : `2/${year}`;
+            }
+
+            return {
+                id: enrollment.id,
+                enrollmentDate: enrollment.enrollmentDate,
+                year: new Date(enrollment.enrollmentDate).getFullYear(), // Academic Year (Gestión)
+                period: period,
+                courseName: course.name,
+                courseCode: course.code,
+                levelName: level.name,
+                finalGrade: reportCard ? Number(reportCard.finalGrade) : null,
+                status: enrollment.status === 'COMPLETED' ? 'Aprobado' :
+                    enrollment.status === 'active' || enrollment.status === 'ACTIVE' ? 'Cursando' :
+                        enrollment.status, // Translate statuses as needed
+                certificateUrl: enrollment.certificates[0]?.certificateFileUrl || null
+            };
+        });
+
+        res.json(history);
+    } catch (error) {
+        console.error('Error fetching student history:', error);
+        res.status(500).json({ message: 'Error retrieving student history' });
+    }
+};

@@ -12,7 +12,7 @@ export interface Student {
     previousSchool?: string; // NEW
     schoolId?: number | null; // Database School ID
     school?: School;
-    enrollmentStatus: 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'DROPPED';
+    enrollmentStatus: 'ACTIVE' | 'INACTIVE' | 'GRADUATED' | 'DROPPED' | 'RETIRADO' | 'ABANDONO' | 'NO_INCORPORADO';
     enrollmentYear?: number; // Optional or derived
     user: {
         id: number;
@@ -81,3 +81,16 @@ export interface CreateStudentDTO {
 }
 
 export interface UpdateStudentDTO extends Partial<CreateStudentDTO> { }
+
+export interface AcademicHistoryRecord {
+    id: number;
+    enrollmentDate: string;
+    year: number;
+    period: string;
+    courseName: string;
+    courseCode: string;
+    levelName: string;
+    finalGrade: number | null;
+    status: string;
+    certificateUrl: string | null;
+}

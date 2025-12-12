@@ -26,7 +26,7 @@ const studentSchema = z.object({
     // previousSchool: z.string().optional(), // Removed in favor of schoolId
     schoolId: z.number().optional().nullable(),
     medicalNotes: z.string().optional(),
-    enrollmentStatus: z.enum(['ACTIVE', 'INACTIVE', 'GRADUATED', 'DROPPED']),
+    enrollmentStatus: z.enum(['ACTIVE', 'INACTIVE', 'GRADUATED', 'DROPPED', 'RETIRADO', 'ABANDONO', 'NO_INCORPORADO']),
 
     // Guardian
     guardian: z.object({
@@ -245,14 +245,28 @@ const StudentFormPage = () => {
     }
 
     return (
-        <div className="max-w-5xl mx-auto pb-10">
-            <div className="flex items-center gap-4 mb-8">
-                <button onClick={() => navigate('/dashboard/students')} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-[#004694] transition-colors">
-                    <ArrowLeft size={24} />
-                </button>
-                <h1 className="text-3xl font-bold text-[#004694] tracking-tight">
-                    {isEditMode ? 'Editar Estudiante' : 'Registro de Estudiante'}
-                </h1>
+        <div className="max-w-5xl mx-auto pb-10 space-y-8">
+            {/* Hero Header */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#004694] via-[#005ba3] to-[#006fd6] p-8 text-white shadow-xl">
+                <div className="relative z-10 flex items-center gap-4">
+                    <button 
+                        onClick={() => navigate('/dashboard/students')} 
+                        className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
+                    <div>
+                        <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
+                            <User size={32} className="text-blue-200" />
+                            {isEditMode ? 'Editar Estudiante' : 'Registro de Estudiante'}
+                        </h1>
+                        <p className="text-blue-100 text-lg font-medium mt-1">
+                            {isEditMode ? 'Actualiza la información del estudiante.' : 'Complete el formulario para inscribir un nuevo estudiante.'}
+                        </p>
+                    </div>
+                </div>
+                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 right-20 -mb-10 w-40 h-40 bg-blue-400/20 rounded-full blur-2xl"></div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit as any, (errors) => {
@@ -291,8 +305,8 @@ const StudentFormPage = () => {
                 <input type="hidden" {...register('documentType')} />
                 <input type="hidden" {...register('guardian.documentType')} />
                 {/* 1. Datos Personales */}
-                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                <section className="bg-white border border-blue-100 rounded-2xl p-6 shadow-lg shadow-blue-900/5">
+                    <div className="flex items-center gap-3 mb-6 border-b border-blue-50 pb-4">
                         <div className="p-2 bg-blue-50 rounded-lg text-[#004694]"><User size={24} /></div>
                         <h2 className="text-xl font-bold text-[#004694]">Datos Personales</h2>
                     </div>
@@ -371,9 +385,9 @@ const StudentFormPage = () => {
                 </section>
 
                 {/* 2. Información Académica */}
-                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm relative z-20">
-                     <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
-                        <div className="p-2 bg-purple-50 rounded-lg text-purple-600"><School size={24} /></div>
+                <section className="bg-white border border-blue-100 rounded-2xl p-6 shadow-lg shadow-blue-900/5 relative z-20">
+                     <div className="flex items-center gap-3 mb-6 border-b border-blue-50 pb-4">
+                        <div className="p-2 bg-blue-50 rounded-lg text-[#004694]"><School size={24} /></div>
                         <h2 className="text-xl font-bold text-[#004694]">Información Académica</h2>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -395,22 +409,25 @@ const StudentFormPage = () => {
                                 <option value="ACTIVE">Activo</option>
                                 <option value="INACTIVE">Inactivo</option>
                                 <option value="GRADUATED">Graduado</option>
-                                <option value="DROPPED">Retirado</option>
+                                <option value="DROPPED">Retirado (Baja)</option>
+                                <option value="RETIRADO">Retirado</option>
+                                <option value="ABANDONO">Abandono</option>
+                                <option value="NO_INCORPORADO">No Incorporado</option>
                             </select>
                         </div>
                     </div>
                 </section>
 
                 {/* 3. Datos del Tutor/Padre */}
-                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm relative z-10">
-                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
-                        <div className="p-2 bg-green-50 rounded-lg text-green-600"><p className="font-bold text-lg">T</p></div>
+                <section className="bg-white border border-blue-100 rounded-2xl p-6 shadow-lg shadow-blue-900/5 relative z-10">
+                    <div className="flex items-center gap-3 mb-6 border-b border-blue-50 pb-4">
+                        <div className="p-2 bg-blue-50 rounded-lg text-[#004694]"><p className="font-bold text-lg px-1">T</p></div>
                         <h2 className="text-xl font-bold text-[#004694]">Datos del Tutor / Apoderado</h2>
                     </div>
                     
-                    <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl mb-6 flex items-start gap-3">
-                         <Info className="text-yellow-400 shrink-0 mt-1" size={18} />
-                         <p className="text-sm text-yellow-200">
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6 flex items-start gap-3">
+                         <Info className="text-amber-600 shrink-0 mt-1" size={18} />
+                         <p className="text-sm text-amber-800 font-medium">
                              Esta información creará automáticamente una cuenta de usuario para el tutor si no existe.
                          </p>
                     </div>
@@ -468,7 +485,7 @@ const StudentFormPage = () => {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/20 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-8 py-3 bg-[#004694] hover:bg-[#003da5] text-white font-bold rounded-xl shadow-lg shadow-blue-900/20 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Save size={20} />
                         {isSubmitting ? 'Guardando...' : 'Guardar Registro'}
@@ -479,25 +496,33 @@ const StudentFormPage = () => {
             <style>{`
                 .glass-input {
                     display: block;
-                    padding: 0.75rem 1rem;
-                    background-color: #ffffff;
-                    border: 1px solid #e5e7eb;
+                    width: 100%;
+                    padding: 0.875rem 1rem;
+                    background-color: #f8fafc;
+                    border: 1px solid #e2e8f0;
                     border-radius: 0.75rem;
-                    color: #111827;
+                    color: #1e293b;
+                    font-weight: 500;
                     outline: none;
-                    transition: all 0.2s;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 }
                 .glass-input:focus {
                     background-color: #ffffff;
-                    border-color: #3b82f6;
-                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+                    border-color: #004694;
+                    box-shadow: 0 0 0 4px rgba(0, 70, 148, 0.1);
+                }
+                .glass-input:hover {
+                    border-color: #cbd5e1;
                 }
                 .glass-input::placeholder {
-                    color: #9ca3af;
+                    color: #94a3b8;
                 }
-                .glass-input option {
-                    background-color: white;
-                    color: #111827;
+                label {
+                    color: #004694;
+                    font-weight: 700;
+                    font-size: 0.875rem;
+                    margin-bottom: 0.5rem;
+                    display: block;
                 }
             `}</style>
         </div>

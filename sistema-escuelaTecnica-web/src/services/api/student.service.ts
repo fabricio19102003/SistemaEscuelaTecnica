@@ -25,5 +25,9 @@ export const studentService = {
     },
     delete: async (id: string): Promise<void> => {
         await api.delete(`/students/${id}`);
+    },
+    getHistory: async (id: string): Promise<any[]> => {
+        const response = await api.get(`/students/${id}/history`);
+        return response.data;
     }
 };
