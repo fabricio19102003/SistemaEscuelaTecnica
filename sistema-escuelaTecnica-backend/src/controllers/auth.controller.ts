@@ -36,6 +36,12 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
+        // Update lastLoginAt
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() }
+        });
+
         const roles = user.userRoles.map((ur: any) => ur.role.name);
 
         const token = generateToken({

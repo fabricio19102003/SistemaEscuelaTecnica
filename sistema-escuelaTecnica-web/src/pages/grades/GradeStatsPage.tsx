@@ -169,17 +169,17 @@ const GradeStatsPage = () => {
             <div className="flex items-center gap-4 mb-6">
                  <button 
                     onClick={() => navigate('/dashboard/grades')} 
-                    className="p-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition border border-slate-700"
+                    className="p-2 bg-white text-gray-500 rounded-lg hover:bg-gray-50 transition border border-gray-200 hover:text-[#004694]"
                 >
                     <ArrowLeft size={20} />
                 </button>
                 <div className="flex-1 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-white">Estadísticas de Calificaciones</h2>
+                    <h2 className="text-2xl font-bold text-[#004694]">Estadísticas de Calificaciones</h2>
                     {stats && (
                         <button
                             onClick={handleExportPDF}
                             disabled={generatingPdf}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-red-600/20"
+                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
                         >
                             <Download size={18} />
                             {generatingPdf ? 'Exportando...' : 'Exportar PDF'}
@@ -189,12 +189,12 @@ const GradeStatsPage = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Seleccionar Curso</label>
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Seleccionar Curso</label>
                 <select
                     value={selectedCourseId}
                     onChange={(e) => setSelectedCourseId(e.target.value)}
-                    className="w-full md:w-1/3 px-4 py-3 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-slate-950 text-white placeholder-gray-400"
+                    className="w-full md:w-1/3 px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#004694] bg-gray-50 text-gray-900 focus:bg-white transition-all outline-none"
                 >
                     <option value="">-- Seleccione un Curso --</option>
                     <option value="all">Todos los Cursos (General)</option>
@@ -214,66 +214,66 @@ const GradeStatsPage = () => {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
+                                <div className="p-3 bg-blue-50 rounded-lg text-blue-600 border border-blue-100">
                                     <School size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-gray-400 text-xs uppercase font-bold">Total Estudiantes</p>
-                                    <p className="text-2xl font-bold text-white">{stats.totalStudents}</p>
+                                    <p className="text-gray-500 text-xs uppercase font-bold">Total Estudiantes</p>
+                                    <p className="text-2xl font-black text-gray-900">{stats.totalStudents}</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400">
+                                <div className="p-3 bg-emerald-50 rounded-lg text-emerald-600 border border-emerald-100">
                                     <BarChartIcon size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-gray-400 text-xs uppercase font-bold">Promedio General</p>
-                                    <p className="text-2xl font-bold text-white">{stats.averageScore.toFixed(1)}</p>
+                                    <p className="text-gray-500 text-xs uppercase font-bold">Promedio General</p>
+                                    <p className="text-2xl font-black text-gray-900">{stats.averageScore.toFixed(1)}</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-purple-500/10 rounded-lg text-purple-400">
+                                <div className="p-3 bg-purple-50 rounded-lg text-purple-600 border border-purple-100">
                                     <PieChart size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-gray-400 text-xs uppercase font-bold">Tasa Aprobación</p>
-                                    <p className="text-2xl font-bold text-white">{stats.passRate.toFixed(1)}%</p>
+                                    <p className="text-gray-500 text-xs uppercase font-bold">Tasa Aprobación</p>
+                                    <p className="text-2xl font-black text-gray-900">{stats.passRate.toFixed(1)}%</p>
                                 </div>
                             </div>
                         </div>
                         
                         {/* New Risk Cards */}
-                        <div className="bg-slate-800 p-6 rounded-xl border border-red-900/30 shadow-md relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-2 opacity-10">
+                        <div className="bg-white p-6 rounded-xl border border-red-200 shadow-sm relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-2 opacity-5">
                                 <AlertTriangle size={60} className="text-red-500" />
                              </div>
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-red-500/10 rounded-lg text-red-400">
+                                <div className="p-3 bg-red-50 rounded-lg text-red-600 border border-red-100">
                                     <AlertTriangle size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-gray-400 text-xs uppercase font-bold">En Riesgo (&lt;60)</p>
-                                    <p className="text-2xl font-bold text-white">{stats.atRiskCount}</p>
+                                    <p className="text-gray-500 text-xs uppercase font-bold">En Riesgo (&lt;60)</p>
+                                    <p className="text-2xl font-black text-gray-900">{stats.atRiskCount}</p>
                                 </div>
                             </div>
                         </div>
-                         <div className="bg-slate-800 p-6 rounded-xl border border-orange-900/30 shadow-md relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-2 opacity-10">
+                         <div className="bg-white p-6 rounded-xl border border-orange-200 shadow-sm relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-2 opacity-5">
                                 <TrendingDown size={60} className="text-orange-500" />
                              </div>
                             <div className="flex items-center gap-4">
-                                <div className="p-3 bg-orange-500/10 rounded-lg text-orange-400">
+                                <div className="p-3 bg-orange-50 rounded-lg text-orange-600 border border-orange-100">
                                     <TrendingDown size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-gray-400 text-xs uppercase font-bold">Nota Más Baja</p>
-                                    <p className="text-2xl font-bold text-white">
+                                    <p className="text-gray-500 text-xs uppercase font-bold">Nota Más Baja</p>
+                                    <p className="text-2xl font-bold text-gray-900">
                                         {stats.lowestGrades.length > 0 ? stats.lowestGrades[0].average.toFixed(1) : '-'}
                                     </p>
                                 </div>
@@ -284,24 +284,24 @@ const GradeStatsPage = () => {
                     {/* Charts Row */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Bar Chart: Competencies */}
-                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
-                            <h3 className="text-lg font-semibold text-white mb-6">Rendimiento por Competencia</h3>
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-bold text-[#004694] mb-6">Rendimiento por Competencia</h3>
                             <div className="h-80 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={stats.competencyAverages}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-                                        <XAxis dataKey="name" stroke="#9ca3af" tick={{fontSize: 12}} axisLine={false} tickLine={false} />
-                                        <YAxis stroke="#9ca3af" domain={[0, 100]} axisLine={false} tickLine={false} />
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                                        <XAxis dataKey="name" stroke="#6b7280" tick={{fontSize: 12}} axisLine={false} tickLine={false} />
+                                        <YAxis stroke="#6b7280" domain={[0, 100]} axisLine={false} tickLine={false} />
                                         <Tooltip 
-                                            cursor={{fill: 'rgba(255, 255, 255, 0.05)'}}
+                                            cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
                                             contentStyle={{ 
-                                                backgroundColor: '#111827', 
-                                                borderColor: '#374151', 
-                                                color: '#fff',
+                                                backgroundColor: '#fff', 
+                                                borderColor: '#e5e7eb', 
+                                                color: '#111827',
                                                 borderRadius: '0.5rem',
-                                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
+                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                                             }}
-                                            itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+                                            itemStyle={{ color: '#000', fontWeight: 'bold' }}
                                         />
                                         <Bar dataKey="average" name="Promedio" radius={[4, 4, 0, 0]}>
                                             {stats.competencyAverages.map((entry, index) => (
@@ -314,8 +314,8 @@ const GradeStatsPage = () => {
                         </div>
 
                         {/* Pie Chart: Status Distribution */}
-                        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
-                            <h3 className="text-lg font-semibold text-white mb-6">Distribución de Estados</h3>
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-bold text-[#004694] mb-6">Distribución de Estados</h3>
                             <div className="h-80 w-full flex justify-center items-center">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <RechartsPieChart>
@@ -336,12 +336,13 @@ const GradeStatsPage = () => {
                                         </Pie>
                                         <Tooltip 
                                             contentStyle={{ 
-                                                backgroundColor: '#111827', 
-                                                borderColor: '#374151', 
-                                                color: '#fff',
-                                                borderRadius: '0.5rem'
+                                                backgroundColor: '#fff', 
+                                                borderColor: '#e5e7eb', 
+                                                color: '#111827',
+                                                borderRadius: '0.5rem',
+                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                                             }} 
-                                            itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+                                            itemStyle={{ color: '#000', fontWeight: 'bold' }}
                                         />
                                         <Legend wrapperStyle={{paddingTop: '20px'}} />
                                     </RechartsPieChart>
@@ -352,13 +353,13 @@ const GradeStatsPage = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Detailed Table */}
-                        <div className="bg-slate-800 rounded-xl border border-slate-700 shadow-md overflow-hidden flex flex-col">
-                            <div className="p-6 border-b border-slate-700">
-                                <h3 className="text-lg font-semibold text-white">Detalle de Estudiantes</h3>
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                            <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+                                <h3 className="text-lg font-bold text-[#004694]">Detalle de Estudiantes</h3>
                             </div>
                             <div className="overflow-x-auto flex-1 max-h-96">
                                 <table className="w-full text-left">
-                                    <thead className="bg-slate-900/50 text-xs uppercase text-gray-400 font-semibold sticky top-0 backdrop-blur-md">
+                                    <thead className="bg-[#004694] text-xs uppercase text-white font-bold sticky top-0 backdrop-blur-md">
                                         <tr>
                                             <th className="px-6 py-4">Estudiante</th>
                                             {selectedCourseId === 'all' && <th className="px-6 py-4">Curso</th>}
@@ -366,21 +367,21 @@ const GradeStatsPage = () => {
                                             <th className="px-6 py-4 text-center">Estado</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-700 text-sm">
+                                    <tbody className="divide-y divide-gray-100 text-sm">
                                         {stats.studentPerformance.map((student, idx) => (
-                                            <tr key={idx} className="hover:bg-slate-700/30 transition-colors">
-                                                <td className="px-6 py-4 text-white font-medium">{student.name}</td>
+                                            <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 text-gray-900 font-medium">{student.name}</td>
                                                 {selectedCourseId === 'all' && (
-                                                    <td className="px-6 py-4 text-gray-400 text-xs">{student.course || '-'}</td>
+                                                    <td className="px-6 py-4 text-gray-500 text-xs">{student.course || '-'}</td>
                                                 )}
-                                                <td className="px-6 py-4 text-center font-bold text-gray-300">
+                                                <td className="px-6 py-4 text-center font-bold text-gray-900">
                                                     {student.average > 0 ? student.average.toFixed(1) : '-'}
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
-                                                        student.status === 'Aprobado' ? 'bg-green-500/10 text-green-400' :
-                                                        student.status === 'Reprobado' ? 'bg-red-500/10 text-red-400' :
-                                                        'bg-gray-500/10 text-gray-400'
+                                                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
+                                                        student.status === 'Aprobado' ? 'bg-green-100 text-green-700' :
+                                                        student.status === 'Reprobado' ? 'bg-red-100 text-red-700' :
+                                                        'bg-gray-100 text-gray-500'
                                                     }`}>
                                                         {student.status}
                                                     </span>
@@ -393,27 +394,27 @@ const GradeStatsPage = () => {
                         </div>
 
                          {/* Lowest Grades / At Risk Table */}
-                         <div className="bg-slate-800 rounded-xl border border-red-900/20 shadow-md overflow-hidden flex flex-col">
-                            <div className="p-6 border-b border-slate-700 bg-red-900/5">
-                                <h3 className="text-lg font-semibold text-red-200 flex items-center gap-2">
+                         <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden flex flex-col">
+                            <div className="p-6 border-b border-red-100 bg-red-50">
+                                <h3 className="text-lg font-bold text-red-700 flex items-center gap-2">
                                     <TrendingDown size={20} />
                                     Estudiantes con Menor Rendimiento
                                 </h3>
                             </div>
                             <div className="overflow-x-auto flex-1">
                                 <table className="w-full text-left">
-                                    <thead className="bg-slate-900/50 text-xs uppercase text-gray-400 font-semibold">
+                                    <thead className="bg-red-100 text-xs uppercase text-red-700 font-bold">
                                         <tr>
                                             <th className="px-6 py-4">Estudiante</th>
                                             <th className="px-6 py-4 text-center">Promedio</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-700 text-sm">
+                                    <tbody className="divide-y divide-gray-100 text-sm">
                                         {stats.lowestGrades.length > 0 ? (
                                             stats.lowestGrades.map((student, idx) => (
-                                                <tr key={idx} className="hover:bg-slate-700/30 transition-colors">
-                                                    <td className="px-6 py-4 text-white font-medium">{student.name}</td>
-                                                    <td className="px-6 py-4 text-center font-bold text-red-400">
+                                                <tr key={idx} className="hover:bg-red-50/50 transition-colors">
+                                                    <td className="px-6 py-4 text-gray-900 font-medium">{student.name}</td>
+                                                    <td className="px-6 py-4 text-center font-bold text-red-600">
                                                         {student.average.toFixed(1)}
                                                     </td>
                                                 </tr>
@@ -432,9 +433,9 @@ const GradeStatsPage = () => {
                     </div>
                 </div>
             ) : !loading && (
-                <div className="text-center py-20 bg-slate-800/50 rounded-xl border border-dashed border-slate-600">
-                    <Search className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                    <p className="text-gray-400">Seleccione un curso o "Todos" para ver las estadísticas.</p>
+                <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300 shadow-sm">
+                    <Search className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+                    <p className="text-gray-500 font-medium">Seleccione un curso o "Todos" para ver las estadísticas.</p>
                 </div>
             )}
         </div>

@@ -22,7 +22,7 @@ import EnrollmentFormPage from './pages/enrollments/EnrollmentFormPage';
 import GradeEntryPage from './pages/grades/GradeEntryPage';
 import GradeDashboardPage from './pages/grades/GradeDashboardPage';
 import GradeReportsPage from './pages/grades/GradeReportsPage';
-// import GradeStatsPage from './pages/grades/GradeStatsPage'; // Unused
+import GradeStatsPage from './pages/grades/GradeStatsPage';
 import OfficialReportPage from './pages/grades/OfficialReportPage';
 import UserDashboardPage from './pages/users/UserDashboardPage';
 import UserFormPage from './pages/users/UserFormPage';
@@ -59,6 +59,7 @@ const PublicRoute = ({ children }: { children: JSX.Element }) => {
 import TeacherDashboardLayout from './layouts/TeacherDashboardLayout';
 import TeacherCoursesPage from './pages/teacher/TeacherCoursesPage';
 import TeacherCourseDetailPage from './pages/teacher/TeacherCourseDetailPage';
+import TeacherAttendancePage from './pages/teacher/TeacherAttendancePage';
 
 function App() {
     return (
@@ -78,6 +79,7 @@ function App() {
                     {/* Module: My Courses (Students) */}
                     <Route path="courses" element={<TeacherCoursesPage basePath="/teacher/courses" />} />
                     <Route path="courses/:groupId" element={<TeacherCourseDetailPage defaultTab="students" />} />
+                    <Route path="courses/:groupId/attendance" element={<TeacherAttendancePage />} />
                     
                     {/* Module: Grades (Enty) */}
                     <Route path="grades" element={<TeacherCoursesPage basePath="/teacher/grades" />} />
@@ -119,6 +121,7 @@ function App() {
                     <Route path="grades" element={<GradeDashboardPage />} />
                     <Route path="grades/entry" element={<GradeEntryPage />} />
                     <Route path="grades/reports" element={<GradeReportsPage />} />
+                    <Route path="grades/stats" element={<GradeStatsPage />} />
                     <Route path="grades/official-report" element={<OfficialReportPage />} />
 
                     {/* Users Routes */}

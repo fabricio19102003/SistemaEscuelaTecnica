@@ -192,27 +192,27 @@ const EnrollmentFormPage = () => {
             )}
 
             <div className="flex items-center gap-4 mb-8">
-                <button onClick={() => navigate('/dashboard/enrollments')} className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors">
+                <button onClick={() => navigate('/dashboard/enrollments')} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors">
                     <ArrowLeft size={24} />
                 </button>
                 <div>
-                     <h1 className="text-3xl font-bold text-white tracking-tight">Nueva Matrícula</h1>
-                    <p className="text-gray-400">Inscribir estudiante y generar comprobante</p>
+                     <h1 className="text-3xl font-bold text-[#004694] tracking-tight">Nueva Matrícula</h1>
+                    <p className="text-gray-500">Inscribir estudiante y generar comprobante</p>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 
                 {/* Student Selection */}
-                <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
-                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                        <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400"><GraduationCap size={24} /></div>
-                        <h2 className="text-xl font-semibold text-white">Seleccionar Estudiante</h2>
+                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                        <div className="p-2 bg-blue-50 rounded-lg text-blue-600 border border-blue-100"><GraduationCap size={24} /></div>
+                        <h2 className="text-xl font-bold text-[#004694]">Seleccionar Estudiante</h2>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">Estudiante</label>
+                        <label className="text-sm font-bold text-gray-700">Estudiante</label>
                         <select 
-                            className="glass-input w-full [&>option]:text-black"
+                            className="glass-input w-full"
                             value={selectedStudentId}
                             onChange={(e) => setSelectedStudentId(e.target.value)}
                             required
@@ -228,15 +228,15 @@ const EnrollmentFormPage = () => {
                 </section>
 
                 {/* Course Selection */}
-                <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
-                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                        <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400"><Users size={24} /></div>
-                        <h2 className="text-xl font-semibold text-white">Seleccionar Curso</h2>
+                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                        <div className="p-2 bg-purple-50 rounded-lg text-purple-600 border border-purple-100"><Users size={24} /></div>
+                        <h2 className="text-xl font-bold text-[#004694]">Seleccionar Curso</h2>
                     </div>
                     <div className="space-y-2">
-                         <label className="text-sm font-medium text-gray-300">Curso</label>
+                         <label className="text-sm font-bold text-gray-700">Curso</label>
                          <select 
-                            className="glass-input w-full [&>option]:text-black"
+                            className="glass-input w-full"
                             value={selectedCourseId}
                             onChange={(e) => setSelectedCourseId(e.target.value)}
                             required
@@ -252,21 +252,21 @@ const EnrollmentFormPage = () => {
                 </section>
 
                 {/* Price Preview */}
-                <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-32 bg-green-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4 relative">
-                        <div className="p-2 bg-green-500/20 rounded-lg text-green-400"><Calculator size={24} /></div>
-                        <h2 className="text-xl font-semibold text-white">Resumen de Costos</h2>
+                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-32 bg-green-50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none opacity-50"></div>
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4 relative">
+                        <div className="p-2 bg-green-50 rounded-lg text-green-600 border border-green-100"><Calculator size={24} /></div>
+                        <h2 className="text-xl font-bold text-[#004694]">Resumen de Costos</h2>
                     </div>
                     
                     <div className="flex flex-col md:flex-row justify-between items-center gap-6 relative">
                         <div>
-                            <p className="text-gray-400 mb-1">Detalle del cálculo</p>
-                            <p className="text-lg text-white">{discountDetails || 'Precio estándar sin descuentos aplicados'}</p>
+                            <p className="text-gray-500 mb-1 font-medium">Detalle del cálculo</p>
+                            <p className="text-lg text-gray-900">{discountDetails || 'Precio estándar sin descuentos aplicados'}</p>
                         </div>
-                        <div className="text-right bg-black/20 p-4 rounded-xl border border-white/5">
+                        <div className="text-right bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <p className="text-sm text-gray-400 uppercase tracking-wider font-bold mb-1">Monto Total</p>
-                            <p className="text-4xl font-bold text-green-400">Bs {calculatedPrice.toFixed(2)}</p>
+                            <p className="text-4xl font-black text-[#004694]">Bs {calculatedPrice.toFixed(2)}</p>
                         </div>
                     </div>
                 </section>
@@ -275,7 +275,7 @@ const EnrollmentFormPage = () => {
                     <button
                         type="button"
                         onClick={() => navigate('/dashboard/enrollments')}
-                        className="mr-4 px-6 py-3 rounded-xl text-gray-300 hover:bg-white/10 transition-colors font-medium border border-transparent hover:border-white/10"
+                        className="mr-4 px-6 py-3 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors font-medium border border-transparent hover:border-gray-200"
                     >
                         Cancelar
                     </button>
@@ -295,16 +295,15 @@ const EnrollmentFormPage = () => {
                 .glass-input {
                     display: block;
                     padding: 0.75rem 1rem;
-                    background-color: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background-color: #ffffff;
+                    border: 1px solid #e5e7eb;
                     border-radius: 0.75rem;
-                    color: white;
+                    color: #111827;
                     outline: none;
                     transition: all 0.2s;
                 }
                 .glass-input:focus {
-                    background-color: rgba(255, 255, 255, 0.1);
-                    border-color: rgba(59, 130, 246, 0.5);
+                    border-color: #3b82f6;
                     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
                 }
             `}</style>

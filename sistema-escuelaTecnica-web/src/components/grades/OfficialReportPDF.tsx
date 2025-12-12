@@ -6,8 +6,10 @@ import logoUap from '../../assets/images/logo_uap_official.png';
 const styles = StyleSheet.create({
     page: {
         width: '210mm',
-        minHeight: '297mm',
-        padding: '15mm',
+        paddingTop: '15mm',
+        paddingLeft: '15mm',
+        paddingRight: '15mm',
+        paddingBottom: '30mm', // Increased to ensure footer space prevents orphan pages
         fontFamily: 'Helvetica',
         fontSize: 10,
         backgroundColor: '#FFFFFF',
@@ -108,9 +110,7 @@ const styles = StyleSheet.create({
     // Grades Table
     gradesTable: {
         width: '100%',
-        borderStyle: 'solid',
-        borderWidth: 2,
-        borderColor: '#000',
+        // Removed container borders to prevent layout engine freeze on page breaks
         marginBottom: 20,
     },
     tableHeader: {
@@ -166,6 +166,19 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         width: '100%',
         fontSize: 9,
+    },
+    // Footer
+    footer: {
+        position: 'absolute',
+        bottom: 30,
+        left: 20,
+        right: 20,
+        textAlign: 'center',
+        fontSize: 6,
+        color: '#666',
+        borderTopWidth: 1,
+        borderTopColor: '#ccc',
+        paddingTop: 5,
     }
 });
 
@@ -174,51 +187,65 @@ interface OfficialReportPDFProps {
         group: any;
         enrollments: any[];
     };
+    userWhoGenerated: string;
+    clientIp: string;
 }
 
-const OfficialReportPDF: React.FC<OfficialReportPDFProps> = ({ data }) => {
+const OfficialReportPDF: React.FC<OfficialReportPDFProps> = ({ data, userWhoGenerated, clientIp }) => {
     const { group, enrollments } = data;
+    const currentDate = new Date().toLocaleDateString('es-ES');
+    const currentTime = new Date().toLocaleTimeString('es-ES');
     
     // Format data
-    const teacherName = group?.teacher ? `${group.teacher.user.firstName} ${group.teacher.user.paternalSurname} ${group.teacher.user.maternalSurname || ''}`.toUpperCase() : 'POR ASIGNAR';
+    // Format data with defensive checks
+    const teacherUser = group?.teacher?.user;
+    const teacherName = teacherUser 
+        ? `${teacherUser.firstName || ''} ${teacherUser.paternalSurname || ''} ${teacherUser.maternalSurname || ''}`.trim().toUpperCase() 
+        : 'POR ASIGNAR';
+
     const courseName = group?.level?.course?.name || 'Sistema Modular';
-    const levelName = group?.level?.name || 'B4'; // Needs to come from level if available
-    const period = '2/2025'; // This should ideally come from group params or startDate
+    const levelName = group?.level?.name || 'B4';
+    const period = '2/2025'; 
     const date = new Date().toLocaleDateString('es-ES');
     
     // Calculate schedule string - ONLY MONDAY
     let scheduleStr = 'POR DEFINIR';
 
-    const formatTime = (timeVal: string | Date) => {
+    const formatTime = (timeVal: string | Date | null | undefined) => {
         if (!timeVal) return '';
-        const date = new Date(timeVal);
-        if (isNaN(date.getTime())) return String(timeVal).substring(0, 5); // Fallback if not a valid date string
-        
-        // Extract hours and minutes manually to ensure HH:mm format independent of locale vagaries in PDF renderer
-        const hours = date.getUTCHours().toString().padStart(2, '0');
-        const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
+        try {
+            const dateObj = new Date(timeVal);
+            if (isNaN(dateObj.getTime())) return String(timeVal).substring(0, 5);
+            
+            const hours = dateObj.getUTCHours().toString().padStart(2, '0');
+            const minutes = dateObj.getUTCMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        } catch (e) {
+            return '';
+        }
     };
 
-    if (group?.level?.course?.schedules?.length > 0) {
-        // Priority: Course Schedules (as per user request: "horario real del curso")
-        const schedule = group.level.course.schedules.find((s: any) => s.dayOfWeek === 'MONDAY') || group.level.course.schedules[0];
-        
-        const start = formatTime(schedule.startTime);
-        const end = formatTime(schedule.endTime);
-        
-        if (start && end) {
-            scheduleStr = `${start} - ${end} Hrs / Lunes - Viernes`;
+    // Safely access schedules
+    const courseSchedules = group?.level?.course?.schedules;
+    const groupSchedules = group?.schedules;
+
+    if (Array.isArray(courseSchedules) && courseSchedules.length > 0) {
+        const schedule = courseSchedules.find((s: any) => s.dayOfWeek === 'MONDAY') || courseSchedules[0];
+        if (schedule) {
+            const start = formatTime(schedule.startTime);
+            const end = formatTime(schedule.endTime);
+            if (start && end) {
+                scheduleStr = `${start} - ${end} Hrs / Lunes - Viernes`;
+            }
         }
-    } else if (group?.schedules?.length > 0) {
-        // Fallback: Group specific schedules
-        const schedule = group.schedules.find((s: any) => s.dayOfWeek === 'MONDAY') || group.schedules[0];
-        
-        const start = formatTime(schedule.startTime);
-        const end = formatTime(schedule.endTime);
-        
-        if (start && end) {
-            scheduleStr = `${start} - ${end} Hrs / Lunes - Viernes`;
+    } else if (Array.isArray(groupSchedules) && groupSchedules.length > 0) {
+        const schedule = groupSchedules.find((s: any) => s.dayOfWeek === 'MONDAY') || groupSchedules[0];
+        if (schedule) {
+            const start = formatTime(schedule.startTime);
+            const end = formatTime(schedule.endTime);
+            if (start && end) {
+                scheduleStr = `${start} - ${end} Hrs / Lunes - Viernes`;
+            }
         }
     }
 
@@ -235,8 +262,8 @@ const OfficialReportPDF: React.FC<OfficialReportPDFProps> = ({ data }) => {
                     <View style={styles.headerTextContainer}>
                         <Text style={styles.universityName}>UNIVERSIDAD AMAZÓNICA DE PANDO</Text>
                         <Text style={styles.viceRectorado}>VICE-RECTORADO</Text>
-                        <Text style={styles.departmentName}>DIRECCIÓN ACADÉMICA PEDAGÓGICA</Text>
-                        <Text style={styles.departmentName}>UNIDAD DE PROGRAMAS ESPECIALES</Text>
+                        <Text style={styles.departmentName}>DIRECCIÓN ACADÉMICA</Text>
+                        <Text style={styles.departmentName}>CENTRO DE PROYECTOS ESPECIALES Y FORMACIÓN PERMANENTE</Text>
                         <Text style={styles.lema}>"La preservación de la Amazonía es parte de la vida, del proceso y desarrollo de la bella tierra pandina"</Text>
                     </View>
                 </View>
@@ -280,24 +307,18 @@ const OfficialReportPDF: React.FC<OfficialReportPDFProps> = ({ data }) => {
                         <Text style={[styles.th, styles.colObs]}>OBSERVACIONES</Text>
                     </View>
 
-                    {enrollments.map((enrollment, index) => {
-                         const student = enrollment.student;
+                    {Array.isArray(enrollments) && enrollments.map((enrollment, index) => {
+                         const student = enrollment?.student;
+                         if (!student || !student.user) return null;
+
                          const fullName = `${student.user.paternalSurname} ${student.user.maternalSurname || ''} ${student.user.firstName}`.toUpperCase();
                          
                          // Calculate Final Grade
-                         // Assuming the backend has calculated it or we sum it up?
-                         // The prompt says "Nota Final 0-100".
-                         // Usually stored in `grades` or calculated.
-                         // For now, let's sum active grades or check if there's a final grade entry.
-                         // But `getGroupReportData` returns `grades` array.
-                         // Let's sum all grades? Or is there a "FINAL" grade type?
-                         // The prompt implies a single final score.
-                         // Let's assume average of competencies for now if exact logic isn't clear, or check if `gradeValue` exists on `grades`.
-                         // Actually `enrollment.grades` is an array.
-                         // Let's calculate average of available grades as a best guess for "Final Score" if not explicitly stored.
-                         
                          let finalScore = 0;
-                         const validGrades = enrollment.grades.filter((g: any) => g.gradeValue !== null && g.gradeValue !== undefined);
+                         const validGrades = Array.isArray(enrollment.grades) 
+                            ? enrollment.grades.filter((g: any) => g.gradeValue !== null && g.gradeValue !== undefined)
+                            : [];
+                            
                          if (validGrades.length > 0) {
                              const sum = validGrades.reduce((acc: number, curr: any) => acc + Number(curr.gradeValue), 0);
                              finalScore = Math.round(sum / validGrades.length); // Simple average for now
@@ -326,6 +347,11 @@ const OfficialReportPDF: React.FC<OfficialReportPDFProps> = ({ data }) => {
                     <View style={styles.sigCell}>
                         <Text style={styles.sigLine}>Firma de facilitador</Text>
                     </View>
+                </View>
+
+                {/* FOOTER */}
+                <View style={styles.footer}>
+                     <Text>Generado por: {userWhoGenerated} | Fecha: {currentDate} {currentTime} | IP: {clientIp} | El documento se genero desde el sistema de informacion Escuela Técnica de la U.A.P.</Text>
                 </View>
 
             </Page>

@@ -267,27 +267,27 @@ const CourseFormPage = () => {
             <div className="flex items-center gap-4 mb-6">
                 <button 
                     onClick={() => navigate('/dashboard/courses')}
-                    className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"
+                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"
                 >
                     <ArrowLeft size={24} />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-white">
+                    <h1 className="text-2xl font-bold text-[#004694]">
                         {isEditMode ? 'Editar Curso' : 'Nuevo Curso'}
                     </h1>
-                    <p className="text-slate-400">Información del programa académico</p>
+                    <p className="text-gray-500">Información del programa académico</p>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Image Upload Section */}
-                <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 flex flex-col items-center gap-4">
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center gap-4">
                     <div className="relative group">
-                        <div className="w-32 h-32 rounded-xl overflow-hidden bg-slate-700 border-4 border-slate-600 flex items-center justify-center">
+                        <div className="w-32 h-32 rounded-xl overflow-hidden bg-gray-100 border-4 border-gray-200 flex items-center justify-center">
                             {imagePreview ? (
                                 <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
-                                <Book size={48} className="text-slate-400" />
+                                <Book size={48} className="text-gray-400" />
                             )}
                         </div>
                         <label className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-500 transition-colors shadow-lg">
@@ -300,40 +300,40 @@ const CourseFormPage = () => {
                             />
                         </label>
                     </div>
-                    <p className="text-sm text-slate-400">Imagen del Curso</p>
+                    <p className="text-sm text-gray-500">Imagen del Curso</p>
                 </div>
 
                 {/* Course Information */}
-                <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 space-y-4">
-                    <h2 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">Detalles Generales</h2>
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                    <h2 className="text-lg font-bold text-[#004694] border-b border-gray-100 pb-2">Detalles Generales</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Nombre del Curso *</label>
+                            <label className="text-sm font-bold text-gray-700">Nombre del Curso *</label>
                             <input
                                 {...register('name')}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 uppercase"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
                                 placeholder="Ej. Robótica Básica"
                                 onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
                             />
                             {errors.name && <span className="text-red-400 text-xs">{errors.name.message}</span>}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Duración (Meses)</label>
+                            <label className="text-sm font-bold text-gray-700">Duración (Meses)</label>
                             <input
                                 type="number"
                                 {...register('durationMonths')}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                         </div>
 
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-300">Descripción</label>
+                        <label className="text-sm font-bold text-gray-700">Descripción</label>
                         <textarea
                             {...register('description')}
                             rows={4}
-                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none uppercase"
+                            className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none uppercase"
                             placeholder="Descripción detallada del curso..."
                             onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
                         />
@@ -341,14 +341,14 @@ const CourseFormPage = () => {
                 </div>
 
                 {/* Assignments */}
-                <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 space-y-4">
-                    <h2 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">Asignaciones</h2>
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                    <h2 className="text-lg font-bold text-[#004694] border-b border-gray-100 pb-2">Asignaciones</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Docente Responsable</label>
+                            <label className="text-sm font-bold text-gray-700">Docente Responsable</label>
                             <select
                                 {...register('teacherId')}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="">Seleccione un docente</option>
                                 {teachers.map((teacher) => (
@@ -359,11 +359,11 @@ const CourseFormPage = () => {
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Aula / Laboratorio</label>
+                            <label className="text-sm font-bold text-gray-700">Aula / Laboratorio</label>
                             <div className="flex gap-2">
                                 <select
                                     {...register('classroomId')}
-                                    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                    className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
                                     <option value="">Seleccione un aula</option>
                                     {classrooms.map((classroom) => (
@@ -375,7 +375,7 @@ const CourseFormPage = () => {
                                 <button
                                     type="button"
                                     onClick={() => setIsClassroomModalOpen(true)}
-                                    className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex-shrink-0"
+                                    className="p-2 bg-[#004694] hover:bg-blue-700 text-white rounded-lg transition-colors flex-shrink-0"
                                     title="Crear nueva aula"
                                 >
                                     <Plus size={20} />
@@ -386,28 +386,28 @@ const CourseFormPage = () => {
                 </div>
 
                 {/* Schedule Builder */}
-                <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 space-y-4">
-                    <div className="flex justify-between items-center border-b border-slate-700 pb-2">
-                        <h2 className="text-lg font-semibold text-white">Horarios</h2>
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                    <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+                        <h2 className="text-lg font-bold text-[#004694]">Horarios</h2>
                         <div className="flex gap-2">
                             <button
                                 type="button"
                                 onClick={loadTemplate}
-                                className="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-lg hover:bg-slate-600 transition-colors"
+                                className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors border border-gray-200"
                             >
                                 Cargar Plantilla
                             </button>
                             <button
                                 type="button"
                                 onClick={saveAsTemplate}
-                                className="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-lg hover:bg-slate-600 transition-colors"
+                                className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors border border-gray-200"
                             >
                                 Guadar como Plantilla
                             </button>
                             <button
                                 type="button"
                                 onClick={() => append({ dayOfWeek: 'MONDAY' as any, startTime: '', endTime: '' })}
-                                className="text-sm bg-blue-600/20 text-blue-400 px-3 py-1 rounded-lg hover:bg-blue-600/30 transition-colors flex items-center gap-1"
+                                className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1 border border-blue-100"
                             >
                                 <Plus size={16} /> Agregar Horario
                             </button>
@@ -416,12 +416,12 @@ const CourseFormPage = () => {
                     
                     <div className="space-y-3">
                         {fields.map((field, index) => (
-                            <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-slate-900/30 p-3 rounded-lg border border-slate-700/30">
+                            <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end bg-gray-50 p-3 rounded-lg border border-gray-200">
                                 <div className="space-y-1">
-                                    <label className="text-xs text-slate-400">Día</label>
+                                    <label className="text-xs text-gray-500 font-bold">Día</label>
                                     <select
                                         {...register(`schedules.${index}.dayOfWeek`)}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-sm text-white"
+                                        className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-900"
                                     >
                                         {DAYS_OF_WEEK.map(day => (
                                             <option key={day.value} value={day.value}>{day.label}</option>
@@ -429,32 +429,32 @@ const CourseFormPage = () => {
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs text-slate-400">Inicio</label>
+                                    <label className="text-xs text-gray-500 font-bold">Inicio</label>
                                     <input
                                         type="time"
                                         {...register(`schedules.${index}.startTime`)}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-sm text-white"
+                                        className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-900"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-xs text-slate-400">Fin</label>
+                                    <label className="text-xs text-gray-500 font-bold">Fin</label>
                                     <input
                                         type="time"
                                         {...register(`schedules.${index}.endTime`)}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-sm text-white"
+                                        className="w-full bg-white border border-gray-300 rounded px-2 py-1.5 text-sm text-gray-900"
                                     />
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => remove(index)}
-                                    className="p-2 text-red-400 hover:bg-red-500/10 rounded transition-colors self-center"
+                                    className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors self-center"
                                 >
                                     <Trash size={18} />
                                 </button>
                             </div>
                         ))}
                         {fields.length === 0 && (
-                            <p className="text-center text-slate-500 text-sm py-4">No hay horarios definidos.</p>
+                            <p className="text-center text-gray-500 text-sm py-4">No hay horarios definidos.</p>
                         )}
                     </div>
                 </div>
@@ -463,13 +463,13 @@ const CourseFormPage = () => {
                     <button
                         type="button"
                         onClick={() => navigate('/dashboard/courses')}
-                        className="px-6 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition-colors"
+                        className="px-6 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
                     >
                         Cancelar
                     </button>
                     <button
                         type="submit"
-                        className="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors flex items-center gap-2"
+                        className="px-6 py-2 rounded-lg bg-[#004694] text-white hover:bg-blue-700 transition-colors flex items-center gap-2"
                         disabled={isLoading}
                     >
                         <Save size={20} />

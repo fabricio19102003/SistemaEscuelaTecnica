@@ -197,77 +197,96 @@ const EnrollmentListPage = () => {
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Matrículas</h1>
-                    <p className="text-gray-400">Gestión de inscripciones y generación de comprobantes</p>
+            {/* Hero Section */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#004694] via-[#005ba3] to-[#006fd6] p-8 text-white shadow-xl">
+                <div className="relative z-10">
+                    <h1 className="text-4xl font-extrabold tracking-tight mb-3 flex items-center gap-3">
+                        <FileText size={40} className="text-blue-200" />
+                        Gestión de Matrículas
+                    </h1>
+                    <p className="text-blue-100 text-lg max-w-2xl font-medium">
+                        Administra las inscripciones, genera reportes y gestiona los comprobantes de matrícula.
+                    </p>
                 </div>
-                <div className="flex gap-2">
-                     <button
-                        onClick={handleExportReport}
-                        disabled={isGeneratingReport}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl shadow-lg shadow-green-900/20 transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50"
-                    >
-                        {isGeneratingReport ? (
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        ) : (
-                            <FileSpreadsheet size={20} />
-                        )}
-                        <span>Exportar Lista</span>
-                    </button>
-                    <button
-                        onClick={() => navigate('/dashboard/enrollments/new')}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-900/20 transition-all duration-200 transform hover:scale-[1.02]"
-                    >
-                        <Plus size={20} />
-                        <span>Nueva Matrícula</span>
-                    </button>
-                </div>
+                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 right-20 -mb-10 w-40 h-40 bg-blue-400/20 rounded-full blur-2xl"></div>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
-                 <div className="flex flex-col md:flex-row gap-4 mb-6">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            {/* Toolbar & Filters */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center mb-6">
+                    <h2 className="text-lg font-bold text-gray-800">Filtros y Acciones</h2>
+                    <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+                         <button
+                            onClick={handleExportReport}
+                            disabled={isGeneratingReport}
+                            className="flex-1 lg:flex-none justify-center items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-xl shadow-md transition-all disabled:opacity-50"
+                        >
+                            {isGeneratingReport ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            ) : (
+                                <FileSpreadsheet size={20} />
+                            )}
+                            <span>Exportar Lista</span>
+                        </button>
+                        <button
+                            onClick={() => navigate('/dashboard/enrollments/new')}
+                            className="flex-1 lg:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-[#004694] hover:bg-[#003da5] text-white rounded-xl shadow-md transition-all"
+                        >
+                            <Plus size={20} />
+                            <span>Nueva Matrícula</span>
+                        </button>
+                    </div>
+                </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search className="h-5 w-5 text-gray-400" />
+                        </div>
                         <input 
                             type="text" 
-                            placeholder="Buscar por estudiante, curso o código..." 
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                            placeholder="Buscar..." 
+                            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl leading-5 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#004694] focus:border-transparent transition-all"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="relative w-full md:w-32">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Filter className="h-5 w-5 text-gray-400" />
+                        </div>
                         <input
                            type="number"
                            placeholder="Gestión"
-                           className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                           className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl leading-5 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#004694] focus:border-transparent transition-all"
                            value={selectedYear}
                            onChange={(e) => setSelectedYear(e.target.value)}
                         />
                     </div>
-                    <div className="relative w-full md:w-48">
-                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <div className="relative">
+                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Filter className="h-5 w-5 text-gray-400" />
+                        </div>
                          <select
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-white focus:outline-none focus:border-blue-500/50 transition-colors appearance-none"
+                            className="block w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl leading-5 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#004694] focus:border-transparent transition-all appearance-none"
                             value={selectedAcademicPeriod}
                             onChange={(e) => setSelectedAcademicPeriod(e.target.value)}
                          >
-                            <option value="" className="text-gray-900">Todos los Periodos</option>
-                            <option value="1" className="text-gray-900">Periodo 1</option>
-                            <option value="2" className="text-gray-900">Periodo 2</option>
+                            <option value="">Todos los Periodos</option>
+                            <option value="1">Periodo 1</option>
+                            <option value="2">Periodo 2</option>
                          </select>
                     </div>
-                     <div className="relative w-full md:w-64">
+                     <div className="relative">
                          <select
-                            className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-3 pr-4 text-white focus:outline-none focus:border-blue-500/50 transition-colors appearance-none"
+                            className="block w-full pl-4 pr-10 py-2.5 border border-gray-200 rounded-xl leading-5 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#004694] focus:border-transparent transition-all appearance-none"
                             value={selectedCourseId}
                             onChange={(e) => setSelectedCourseId(e.target.value)}
                          >
-                            <option value="" className="text-gray-900">Todos los Módulos</option>
+                            <option value="">Todos los Módulos</option>
                             {courses.map(course => (
-                                <option key={course.id} value={course.id} className="text-gray-900">
+                                <option key={course.id} value={course.id}>
                                     {course.name}
                                 </option>
                             ))}
@@ -276,42 +295,42 @@ const EnrollmentListPage = () => {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full rounded-lg overflow-hidden">
                         <thead>
-                            <tr className="border-b border-white/10">
-                                <th className="text-left py-4 px-4 text-gray-400 font-medium">Estudiante</th>
-                                <th className="text-left py-4 px-4 text-gray-400 font-medium">Grupo/Curso</th>
-                                <th className="text-left py-4 px-4 text-gray-400 font-medium">Fecha</th>
-                                <th className="text-left py-4 px-4 text-gray-400 font-medium">Estado</th>
-                                <th className="text-left py-4 px-4 text-gray-400 font-medium">Acciones</th>
+                            <tr className="bg-[#004694] border-b border-[#003da5]">
+                                <th className="text-left py-4 px-4 text-white font-bold">Estudiante</th>
+                                <th className="text-left py-4 px-4 text-white font-bold">Grupo/Curso</th>
+                                <th className="text-left py-4 px-4 text-white font-bold">Fecha</th>
+                                <th className="text-left py-4 px-4 text-white font-bold">Estado</th>
+                                <th className="text-left py-4 px-4 text-white font-bold">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-gray-100">
                             {isLoading ? (
                                 <tr><td colSpan={5} className="text-center py-8 text-gray-500">Cargando...</td></tr>
                             ) : filteredEnrollments.length === 0 ? (
                                 <tr><td colSpan={5} className="text-center py-8 text-gray-500">No hay matrículas registradas o no coinciden con la búsqueda</td></tr>
                             ) : (
                                 filteredEnrollments.map((enrollment: any) => (
-                                    <tr key={enrollment.id} className="hover:bg-white/5 transition-colors">
+                                    <tr key={enrollment.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="py-4 px-4">
-                                            <div className="text-white font-medium">
+                                            <div className="text-gray-900 font-bold">
                                                 {enrollment.student?.user?.firstName} {enrollment.student?.user?.paternalSurname}
                                             </div>
                                             <div className="text-xs text-gray-500">{enrollment.student?.registrationCode}</div>
                                         </td>
                                         <td className="py-4 px-4">
-                                            <div className="text-gray-300">
+                                            <div className="text-gray-600">
                                                 {enrollment.group?.level?.course?.name} ({enrollment.group?.level?.name})
                                             </div>
                                             <div className="text-xs text-gray-500">{enrollment.group?.code}</div>
                                         </td>
-                                        <td className="py-4 px-4 text-gray-300">
+                                        <td className="py-4 px-4 text-gray-600">
                                             {new Date(enrollment.enrollmentDate).toLocaleDateString()}
                                         </td>
                                          <td className="py-4 px-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                enrollment.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                                                enrollment.status === 'ACTIVE' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-500 border border-gray-200'
                                             }`}>
                                                 {enrollment.status}
                                             </span>
@@ -320,14 +339,14 @@ const EnrollmentListPage = () => {
                                             <div className="flex items-center gap-2">
                                                 <button 
                                                     onClick={() => handleViewPdf(enrollment.id)}
-                                                    className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-blue-400 transition-colors" 
+                                                    className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors" 
                                                     title="Ver PDF"
                                                 >
                                                     <FileText size={18} />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDelete(enrollment.id)}
-                                                    className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors" 
+                                                    className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors" 
                                                     title="Eliminar"
                                                 >
                                                     <Trash2 size={18} />

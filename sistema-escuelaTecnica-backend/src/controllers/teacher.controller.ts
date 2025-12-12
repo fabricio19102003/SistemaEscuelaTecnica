@@ -338,7 +338,11 @@ export const getTeacherAssignments = async (req: Request, res: Response) => {
                     }
                 },
                 _count: {
-                    select: { enrollments: true }
+                    select: {
+                        enrollments: {
+                            where: { status: 'ACTIVE' }
+                        }
+                    }
                 }
             },
             orderBy: {
@@ -346,7 +350,12 @@ export const getTeacherAssignments = async (req: Request, res: Response) => {
             }
         });
 
-        res.json(groups);
+        const formattedGroups = groups.map(group => ({
+            ...group,
+            currentEnrolled: group._count.enrollments
+        }));
+
+        res.json(formattedGroups);
     } catch (error) {
         console.error('Error fetching teacher assignments:', error);
         res.status(500).json({ message: 'Error fetching assignments' });

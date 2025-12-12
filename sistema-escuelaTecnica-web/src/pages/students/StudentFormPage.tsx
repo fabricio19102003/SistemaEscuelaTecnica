@@ -247,10 +247,10 @@ const StudentFormPage = () => {
     return (
         <div className="max-w-5xl mx-auto pb-10">
             <div className="flex items-center gap-4 mb-8">
-                <button onClick={() => navigate('/dashboard/students')} className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors">
+                <button onClick={() => navigate('/dashboard/students')} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-[#004694] transition-colors">
                     <ArrowLeft size={24} />
                 </button>
-                <h1 className="text-3xl font-bold text-white tracking-tight">
+                <h1 className="text-3xl font-bold text-[#004694] tracking-tight">
                     {isEditMode ? 'Editar Estudiante' : 'Registro de Estudiante'}
                 </h1>
             </div>
@@ -291,10 +291,10 @@ const StudentFormPage = () => {
                 <input type="hidden" {...register('documentType')} />
                 <input type="hidden" {...register('guardian.documentType')} />
                 {/* 1. Datos Personales */}
-                <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
-                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                        <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400"><User size={24} /></div>
-                        <h2 className="text-xl font-semibold text-white">Datos Personales</h2>
+                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                        <div className="p-2 bg-blue-50 rounded-lg text-[#004694]"><User size={24} /></div>
+                        <h2 className="text-xl font-bold text-[#004694]">Datos Personales</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
@@ -319,7 +319,7 @@ const StudentFormPage = () => {
                         {/* Fields */}
                         <div className="md:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300">Nombres *</label>
+                                <label className="text-sm font-bold text-gray-700">Nombres *</label>
                                 <input {...register('firstName')} className="glass-input w-full uppercase" onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()} placeholder="Ej. JUAN ANDRÉS" />
                                 {errors.firstName && <p className="text-red-400 text-xs">{errors.firstName.message}</p>}
                             </div>
@@ -371,10 +371,10 @@ const StudentFormPage = () => {
                 </section>
 
                 {/* 2. Información Académica */}
-                <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl relative z-20">
-                     <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                        <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400"><School size={24} /></div>
-                        <h2 className="text-xl font-semibold text-white">Información Académica</h2>
+                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm relative z-20">
+                     <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                        <div className="p-2 bg-purple-50 rounded-lg text-purple-600"><School size={24} /></div>
+                        <h2 className="text-xl font-bold text-[#004694]">Información Académica</h2>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                          <div className="space-y-2 col-span-2">
@@ -402,10 +402,10 @@ const StudentFormPage = () => {
                 </section>
 
                 {/* 3. Datos del Tutor/Padre */}
-                <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl relative z-10">
-                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                        <div className="p-2 bg-green-500/20 rounded-lg text-green-400"><p className="font-bold text-lg">T</p></div>
-                        <h2 className="text-xl font-semibold text-white">Datos del Tutor / Apoderado</h2>
+                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm relative z-10">
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                        <div className="p-2 bg-green-50 rounded-lg text-green-600"><p className="font-bold text-lg">T</p></div>
+                        <h2 className="text-xl font-bold text-[#004694]">Datos del Tutor / Apoderado</h2>
                     </div>
                     
                     <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl mb-6 flex items-start gap-3">
@@ -461,7 +461,7 @@ const StudentFormPage = () => {
                      <button
                         type="button"
                         onClick={() => navigate('/dashboard/students')}
-                        className="mr-4 px-6 py-3 rounded-xl text-gray-300 hover:bg-white/10 transition-colors font-medium border border-transparent hover:border-white/10"
+                        className="mr-4 px-6 py-3 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors font-medium border border-transparent hover:border-gray-200"
                     >
                         Cancelar
                     </button>
@@ -480,24 +480,24 @@ const StudentFormPage = () => {
                 .glass-input {
                     display: block;
                     padding: 0.75rem 1rem;
-                    background-color: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background-color: #ffffff;
+                    border: 1px solid #e5e7eb;
                     border-radius: 0.75rem;
-                    color: white;
+                    color: #111827;
                     outline: none;
                     transition: all 0.2s;
                 }
                 .glass-input:focus {
-                    background-color: rgba(255, 255, 255, 0.1);
-                    border-color: rgba(59, 130, 246, 0.5);
-                    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+                    background-color: #ffffff;
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
                 }
                 .glass-input::placeholder {
-                    color: rgba(156, 163, 175, 0.8);
+                    color: #9ca3af;
                 }
                 .glass-input option {
-                    background-color: #1f2937;
-                    color: white;
+                    background-color: white;
+                    color: #111827;
                 }
             `}</style>
         </div>

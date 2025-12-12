@@ -110,27 +110,27 @@ const AgreementFormPage = () => {
     return (
         <div className="max-w-4xl mx-auto pb-10">
             <div className="flex items-center gap-4 mb-8">
-                <button onClick={() => navigate('/dashboard/agreements')} className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors">
+                <button onClick={() => navigate('/dashboard/agreements')} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition-colors">
                     <ArrowLeft size={24} />
                 </button>
                 <div>
-                     <h1 className="text-3xl font-bold text-white tracking-tight">
+                     <h1 className="text-3xl font-bold text-[#004694] tracking-tight">
                         {isEditMode ? 'Editar Convenio' : 'Nuevo Convenio'}
                     </h1>
-                    <p className="text-gray-400">Establecer acuerdos y descuentos con colegios</p>
+                    <p className="text-gray-500">Establecer acuerdos y descuentos con colegios</p>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-                <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
-                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                        <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400"><FileSignature size={24} /></div>
-                        <h2 className="text-xl font-semibold text-white">Detalles del Convenio</h2>
+                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                        <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600 border border-indigo-100"><FileSignature size={24} /></div>
+                        <h2 className="text-xl font-bold text-[#004694]">Detalles del Convenio</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2 col-span-2 md:col-span-1">
-                            <label className="text-sm font-medium text-gray-300">Nombre del Convenio *</label>
+                            <label className="text-sm font-bold text-gray-700">Nombre del Convenio *</label>
                             <input 
                                 type="text"
                                 {...register('name')}
@@ -141,30 +141,30 @@ const AgreementFormPage = () => {
                                     target.value = target.value.toUpperCase();
                                 }}
                             />
-                            {errors.name && <p className="text-red-400 text-xs">{errors.name.message}</p>}
+                            {errors.name && <p className="text-red-500 text-xs">{errors.name.message}</p>}
                         </div>
 
                          <div className="space-y-2 col-span-2 md:col-span-1">
                              <div className="flex justify-between">
-                                  <label className="text-sm font-medium text-gray-300">Tipo de Descuento *</label>
-                                  <label className="text-sm font-medium text-gray-300">Activo</label>
+                                  <label className="text-sm font-bold text-gray-700">Tipo de Descuento *</label>
+                                  <label className="text-sm font-bold text-gray-700">Activo</label>
                              </div>
                              <div className="flex gap-4">
-                                <select {...register('discountType')} className="glass-input w-full flex-1 [&>option]:text-black">
+                                <select {...register('discountType')} className="glass-input w-full flex-1">
                                     <option value={DiscountType.PERCENTAGE}>Porcentaje (%)</option>
                                     <option value={DiscountType.FIXED_AMOUNT}>Monto Fijo (Bs)</option>
                                 </select>
                                 
                                 {isEditMode && (
                                     <div className="flex items-center h-[50px]">
-                                        <input type="checkbox" {...register('isActive')} className="w-6 h-6 rounded bg-white/5 border-white/10 focus:ring-offset-0 focus:ring-2 focus:ring-blue-500" />
+                                        <input type="checkbox" {...register('isActive')} className="w-6 h-6 rounded bg-white border-gray-300 text-blue-600 focus:ring-blue-500" />
                                     </div>
                                 )}
                              </div>
                         </div>
 
                         <div className="space-y-2">
-                             <label className="text-sm font-medium text-gray-300">Valor del Descuento *</label>
+                             <label className="text-sm font-bold text-gray-700">Valor del Descuento *</label>
                              <div className="relative">
                                 <input 
                                     type="number" 
@@ -173,15 +173,15 @@ const AgreementFormPage = () => {
                                     className="glass-input w-full pr-16" 
                                     placeholder="0.00" 
                                 />
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold pointer-events-none">
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold pointer-events-none">
                                     {selectedDiscountType === DiscountType.PERCENTAGE ? <Percent size={18} /> : 'Bs'}
                                 </div>
                              </div>
-                            {errors.discountValue && <p className="text-red-400 text-xs">{errors.discountValue.message}</p>}
+                            {errors.discountValue && <p className="text-red-500 text-xs">{errors.discountValue.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Notas Adicionales</label>
+                            <label className="text-sm font-bold text-gray-700">Notas Adicionales</label>
                              <textarea 
                                 {...register('notes')} 
                                 className="glass-input w-full h-[50px] resize-none" 
@@ -195,33 +195,33 @@ const AgreementFormPage = () => {
                     </div>
                 </section>
 
-                <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
-                     <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                        <div className="p-2 bg-green-500/20 rounded-lg text-green-400"><Calendar size={24} /></div>
-                        <h2 className="text-xl font-semibold text-white">Vigencia del Convenio</h2>
+                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                     <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                        <div className="p-2 bg-green-50 rounded-lg text-green-600 border border-green-100"><Calendar size={24} /></div>
+                        <h2 className="text-xl font-bold text-[#004694]">Vigencia del Convenio</h2>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Fecha de Inicio *</label>
+                            <label className="text-sm font-bold text-gray-700">Fecha de Inicio *</label>
                             <div className="relative">
                                 <input 
                                     type="date" 
                                     {...register('startDate')} 
-                                    className="glass-input w-full [color-scheme:dark] cursor-pointer" 
+                                    className="glass-input w-full cursor-pointer" 
                                 />
                                 <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
                             </div>
-                            {errors.startDate && <p className="text-red-400 text-xs">{errors.startDate.message}</p>}
+                            {errors.startDate && <p className="text-red-500 text-xs">{errors.startDate.message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-300">Fecha de Finalización (Opcional)</label>
+                            <label className="text-sm font-bold text-gray-700">Fecha de Finalización (Opcional)</label>
                             <div className="relative">
                                 <input 
                                     type="date" 
                                     {...register('endDate')} 
-                                    className="glass-input w-full [color-scheme:dark] cursor-pointer" 
+                                    className="glass-input w-full cursor-pointer" 
                                 />
                                 <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
                             </div>
@@ -230,18 +230,18 @@ const AgreementFormPage = () => {
                     </div>
                 </section>
 
-                <section className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-xl">
-                    <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                        <div className="p-2 bg-pink-500/20 rounded-lg text-pink-400"><Building2 size={24} /></div>
-                        <h2 className="text-xl font-semibold text-white">Colegios Adscritos</h2>
-                        <div className="ml-auto flex items-center bg-white/5 rounded-lg px-3 py-1.5 border border-white/10">
+                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                        <div className="p-2 bg-pink-50 rounded-lg text-pink-600 border border-pink-100"><Building2 size={24} /></div>
+                        <h2 className="text-xl font-bold text-[#004694]">Colegios Adscritos</h2>
+                        <div className="ml-auto flex items-center bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200">
                             <Search size={16} className="text-gray-400 mr-2" />
                             <input 
                                 type="text"
                                 placeholder="Buscar colegio..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
-                                className="bg-transparent border-none outline-none text-sm text-white placeholder-gray-500 w-48"
+                                className="bg-transparent border-none outline-none text-sm text-gray-900 placeholder-gray-400 w-48"
                             />
                         </div>
                     </div>
@@ -263,20 +263,20 @@ const AgreementFormPage = () => {
                                         }}
                                         className={`relative group cursor-pointer p-4 rounded-xl border transition-all duration-200 ${
                                             isSelected 
-                                            ? 'bg-blue-500/20 border-blue-500/50' 
-                                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                            ? 'bg-blue-50 border-blue-500/50' 
+                                            : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-300'
                                         }`}
                                     >
                                         <div className="flex items-start justify-between">
                                             <div>
-                                                <h3 className={`font-medium ${isSelected ? 'text-blue-200' : 'text-gray-200'}`}>{school.name}</h3>
+                                                <h3 className={`font-bold ${isSelected ? 'text-[#004694]' : 'text-gray-900'}`}>{school.name}</h3>
                                                 <p className="text-sm text-gray-500 mt-1">{school.code}</p>
-                                                {school.directorName && <p className="text-xs text-gray-600 mt-2 flex items-center gap-1">Director: {school.directorName}</p>}
+                                                {school.directorName && <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">Director: {school.directorName}</p>}
                                             </div>
                                             <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${
                                                 isSelected 
-                                                ? 'bg-blue-500 border-blue-500 text-white' 
-                                                : 'border-gray-600 text-transparent group-hover:border-gray-500'
+                                                ? 'bg-blue-600 border-blue-600 text-white' 
+                                                : 'border-gray-300 text-transparent group-hover:border-blue-400'
                                             }`}>
                                                 <Check size={14} />
                                             </div>
@@ -318,34 +318,34 @@ const AgreementFormPage = () => {
                 .glass-input {
                     display: block;
                     padding: 0.75rem 1rem;
-                    background-color: rgba(255, 255, 255, 0.05);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background-color: #ffffff;
+                    border: 1px solid #e5e7eb;
                     border-radius: 0.75rem;
-                    color: white;
+                    color: #111827;
                     outline: none;
                     transition: all 0.2s;
                 }
                 .glass-input:focus {
-                    background-color: rgba(255, 255, 255, 0.1);
-                    border-color: rgba(59, 130, 246, 0.5);
+                    background-color: #ffffff;
+                    border-color: #3b82f6;
                     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
                 }
                 .glass-input::placeholder {
-                    color: rgba(156, 163, 175, 0.8);
+                    color: #9ca3af;
                 }
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 6px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-track {
-                    background: rgba(255, 255, 255, 0.05);
+                    background: #f3f4f6;
                     border-radius: 3px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.1);
+                    background: #d1d5db;
                     border-radius: 3px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255, 255, 255, 0.2);
+                    background: #9ca3af;
                 }
             `}</style>
         </div>

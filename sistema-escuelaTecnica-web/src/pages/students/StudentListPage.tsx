@@ -26,22 +26,38 @@ const StudentListPage = () => {
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Hero Section */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#004694] via-[#005ba3] to-[#006fd6] p-8 text-white shadow-xl">
+                <div className="relative z-10">
+                    <h1 className="text-4xl font-extrabold tracking-tight mb-3 flex items-center gap-3">
+                        <GraduationCap size={40} className="text-blue-200" />
+                        Gestión de Estudiantes
+                    </h1>
+                    <p className="text-blue-100 text-lg max-w-2xl font-medium">
+                        Administra la información académica y personal de los estudiantes matriculados en la institución.
+                    </p>
+                </div>
+                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 right-20 -mb-10 w-40 h-40 bg-blue-400/20 rounded-full blur-2xl"></div>
+            </div>
+
+            {/* Toolbar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
                 <div className="relative flex-1 max-w-md">
                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Search className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
                         type="text"
-                        placeholder="Buscar estudiantes..."
+                        placeholder="Buscar estudiantes por nombre o C.I..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-3 border border-gray-600/50 rounded-xl leading-5 bg-white/5 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 sm:text-sm transition-all duration-200 backdrop-blur-sm"
+                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#004694] focus:border-transparent sm:text-sm transition-all duration-200"
                     />
                 </div>
                 <button
                     onClick={() => navigate('new')}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105"
+                    className="flex items-center gap-2 px-6 py-3 bg-[#004694] hover:bg-[#003da5] text-white font-bold rounded-xl shadow-md transition-all duration-200 transform hover:scale-105"
                 >
                     <Plus size={20} />
                     Nuevo Estudiante
@@ -53,10 +69,10 @@ const StudentListPage = () => {
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                 </div>
             ) : (
-                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+                <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-gray-300">
-                            <thead className="bg-black/20 text-xs uppercase font-medium text-gray-400">
+                        <table className="w-full text-left text-gray-600">
+                            <thead className="bg-[#004694] text-xs uppercase font-bold text-white border-b border-[#003da5]">
                                 <tr>
                                     <th className="px-6 py-4">Foto</th>
                                     <th className="px-6 py-4">Nombre Completo</th>
@@ -66,7 +82,7 @@ const StudentListPage = () => {
                                     <th className="px-6 py-4 text-right">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/10">
+                            <tbody className="divide-y divide-gray-100">
                                 <AnimatePresence>
                                     {filteredStudents.map((student) => (
                                         <motion.tr
@@ -74,22 +90,22 @@ const StudentListPage = () => {
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
-                                            className="hover:bg-white/5 transition-colors"
+                                            className="hover:bg-gray-50 transition-colors"
                                         >
                                             <td className="px-6 py-4">
                                                 {student.user?.profileImageUrl ? (
                                                     <img 
                                                         src={student.user.profileImageUrl} 
                                                         alt="Perfil" 
-                                                        className="w-10 h-10 rounded-full object-cover border border-white/20"
+                                                        className="w-10 h-10 rounded-full object-cover border border-gray-200"
                                                     />
                                                 ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#004694]">
                                                         <GraduationCap size={20} />
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 font-medium text-white">
+                                            <td className="px-6 py-4 font-bold text-gray-900">
                                                 {student.user?.firstName} {student.user?.paternalSurname} {student.user?.maternalSurname}
                                             </td>
                                             <td className="px-6 py-4">

@@ -110,10 +110,10 @@ const GradeDashboardPage: React.FC = () => {
 
             <div className="max-w-6xl mx-auto p-6 space-y-12">
                 <div className="mb-8">
-                    <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                    <h1 className="text-4xl font-extrabold text-[#004694]">
                         Módulo de Calificaciones
                     </h1>
-                    <p className="text-gray-400 mt-2 text-lg">Administración académica y reportes.</p>
+                    <p className="text-gray-500 mt-2 text-lg">Administración académica y reportes.</p>
                 </div>
 
                 {/* Main Navigation with 3D Tilt */}
@@ -122,20 +122,20 @@ const GradeDashboardPage: React.FC = () => {
                         <div key={index} onClick={item.action} className="cursor-pointer">
                             <TiltCard 
                                 gradientColor={item.glow}
-                                className={`h-full bg-gradient-to-br ${item.color}`}
+                                className={`h-full bg-white border border-gray-200 shadow-md hover:shadow-xl transition-all`}
                             >
                                 <div className="p-8 h-full flex flex-col justify-between">
                                     <div className="flex items-start justify-between mb-6">
-                                        <div className="p-4 bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-inner ring-1 ring-white/10">
+                                        <div className={`p-4 rounded-2xl shadow-sm ring-1 ring-gray-100 ${item.color.replace('from-', 'bg-').split(' ')[0]}`}>
                                             {item.icon}
                                         </div>
-                                        <ChevronRight className="text-gray-500 group-hover:text-white transition-colors transform group-hover:translate-x-1" />
+                                        <ChevronRight className="text-gray-400 group-hover:text-[#004694] transition-colors transform group-hover:translate-x-1" />
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-blue-200 transition-colors">
+                                        <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-[#004694] transition-colors">
                                             {item.title}
                                         </h3>
-                                        <p className="text-gray-400 font-medium leading-relaxed group-hover:text-gray-300">
+                                        <p className="text-gray-500 font-medium leading-relaxed">
                                             {item.description}
                                         </p>
                                     </div>
@@ -147,36 +147,36 @@ const GradeDashboardPage: React.FC = () => {
 
                 {/* Academic Summary Section */}
                 <div className="mt-16">
-                    <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
-                        <GraduationCap className="text-blue-400" size={32} />
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
+                    <h2 className="text-2xl font-bold text-[#004694] mb-8 flex items-center gap-3">
+                        <GraduationCap className="text-[#004694]" size={32} />
+                        <span>
                             Resumen Académico en Tiempo Real
                         </span>
                     </h2>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {/* Metric 1: Active Period */}
-                        <TiltCard gradientColor="#f97316" className="bg-slate-800/80">
+                        <TiltCard gradientColor="#f97316" className="bg-white border border-gray-200 shadow-sm">
                             <div className="p-6 flex flex-col items-center text-center gap-4">
-                                <div className="p-3 bg-orange-500/10 rounded-full text-orange-400 ring-1 ring-orange-500/20">
+                                <div className="p-3 bg-orange-50 rounded-full text-orange-600 ring-1 ring-orange-100">
                                     <School size={28} />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-400 font-semibold uppercase tracking-wider">Periodo Actual</p>
-                                    <p className="text-3xl font-black text-white mt-1">2025 - I</p>
+                                    <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Periodo Actual</p>
+                                    <p className="text-3xl font-black text-gray-900 mt-1">2025 - I</p>
                                 </div>
                             </div>
                         </TiltCard>
 
                         {/* Metric 2: Total Students */}
-                        <TiltCard gradientColor="#3b82f6" className="bg-slate-800/80">
+                        <TiltCard gradientColor="#3b82f6" className="bg-white border border-gray-200 shadow-sm">
                             <div className="p-6 flex flex-col items-center text-center gap-4">
-                                <div className="p-3 bg-blue-500/10 rounded-full text-blue-400 ring-1 ring-blue-500/20">
+                                <div className="p-3 bg-blue-50 rounded-full text-blue-600 ring-1 ring-blue-100">
                                     <Users size={28} />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-400 font-semibold uppercase tracking-wider">Estudiantes Activos</p>
-                                    <p className="text-3xl font-black text-white mt-1">
+                                    <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Estudiantes Activos</p>
+                                    <p className="text-3xl font-black text-gray-900 mt-1">
                                         {loading ? '...' : metrics?.totalStudents ?? 0}
                                     </p>
                                 </div>
@@ -184,29 +184,29 @@ const GradeDashboardPage: React.FC = () => {
                         </TiltCard>
 
                         {/* Metric 3: Overall Average */}
-                        <TiltCard gradientColor="#10b981" className="bg-slate-800/80">
+                        <TiltCard gradientColor="#10b981" className="bg-white border border-gray-200 shadow-sm">
                             <div className="p-6 flex flex-col items-center text-center gap-4">
-                                <div className="p-3 bg-emerald-500/10 rounded-full text-emerald-400 ring-1 ring-emerald-500/20">
+                                <div className="p-3 bg-emerald-50 rounded-full text-emerald-600 ring-1 ring-emerald-100">
                                     <TrendingUp size={28} />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-400 font-semibold uppercase tracking-wider">Promedio Global</p>
-                                    <p className="text-3xl font-black text-white mt-1">
+                                    <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Promedio Global</p>
+                                    <p className="text-3xl font-black text-gray-900 mt-1">
                                          {loading ? '...' : metrics?.overallAverage ?? 0}
                                     </p>
                                 </div>
                             </div>
                         </TiltCard>
 
-                         {/* Metric 4: Top Course */}
-                         <TiltCard gradientColor="#eab308" className="bg-slate-800/80">
+                        {/* Metric 4: Top Course */}
+                        <TiltCard gradientColor="#eab308" className="bg-white border border-gray-200 shadow-sm">
                             <div className="p-6 flex flex-col items-center text-center gap-4">
-                                <div className="p-3 bg-yellow-500/10 rounded-full text-yellow-400 ring-1 ring-yellow-500/20">
+                                <div className="p-3 bg-yellow-50 rounded-full text-yellow-600 ring-1 ring-yellow-100">
                                     <Award size={28} />
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-400 font-semibold uppercase tracking-wider">Curso Destacado</p>
-                                    <p className="text-xl font-black text-white mt-1 truncate w-full px-2">
+                                    <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Curso Destacado</p>
+                                    <p className="text-xl font-black text-gray-900 mt-1 truncate w-full px-2">
                                          {loading ? '...' : metrics?.topCourse ?? '-'}
                                     </p>
                                 </div>

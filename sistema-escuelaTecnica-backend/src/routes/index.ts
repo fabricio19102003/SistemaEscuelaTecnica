@@ -11,6 +11,7 @@ import agreementRoutes from './agreement.routes.js';
 import enrollmentRoutes from './enrollment.routes.js';
 import gradeRoutes from './grade.routes.js';
 import userRoutes from './user.routes.js';
+import attendanceRoutes from './attendance.routes.js';
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use('/agreements', agreementRoutes);
 router.use('/enrollments', enrollmentRoutes);
 router.use('/grades', gradeRoutes);
 router.use('/users', userRoutes);
+router.use('/attendance', attendanceRoutes);
 
 export default router;

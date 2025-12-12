@@ -15,10 +15,12 @@ export interface EnrollmentWithGrades {
     student: {
         id: number;
         registrationCode?: string;
+        documentNumber?: string;
         user: {
             firstName: string;
             paternalSurname: string;
             maternalSurname: string;
+            profileImageUrl?: string;
         }
     };
     group?: {

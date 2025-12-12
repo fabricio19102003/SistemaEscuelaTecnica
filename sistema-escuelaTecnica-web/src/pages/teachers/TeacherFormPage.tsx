@@ -147,27 +147,27 @@ const TeacherFormPage = () => {
             <div className="flex items-center gap-4 mb-6">
                 <button 
                     onClick={() => navigate('/dashboard/teachers')}
-                    className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"
+                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition-colors"
                 >
                     <ArrowLeft size={24} />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-white">
+                    <h1 className="text-2xl font-bold text-[#004694]">
                         {isEditMode ? 'Editar Docente' : 'Nuevo Docente'}
                     </h1>
-                    <p className="text-slate-400">Complete la información del personal académico</p>
+                    <p className="text-gray-500">Complete la información del personal académico</p>
                 </div>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Photo Upload Section */}
-                <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 flex flex-col items-center gap-4">
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center gap-4">
                     <div className="relative group">
-                        <div className="w-32 h-32 rounded-full overflow-hidden bg-slate-700 border-4 border-slate-600 flex items-center justify-center">
+                        <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-4 border-gray-200 flex items-center justify-center">
                             {photoPreview ? (
                                 <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
-                                <UserIcon size={48} className="text-slate-400" />
+                                <UserIcon size={48} className="text-gray-400" />
                             )}
                         </div>
                         <label className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-500 transition-colors shadow-lg">
@@ -180,35 +180,35 @@ const TeacherFormPage = () => {
                             />
                         </label>
                     </div>
-                    <p className="text-sm text-slate-400">Foto de Perfil</p>
+                    <p className="text-sm text-gray-500">Foto de Perfil</p>
                 </div>
 
                 {/* Personal Information */}
-                <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 space-y-4">
-                    <h2 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">Información Personal</h2>
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                    <h2 className="text-lg font-bold text-[#004694] border-b border-gray-100 pb-2">Información Personal</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Nombre *</label>
+                            <label className="text-sm font-bold text-gray-700">Nombre *</label>
                             <input
                                 {...register('firstName')}
                                 onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                 placeholder="Ej. JUAN"
                             />
                             {errors.firstName && <span className="text-red-400 text-xs">{errors.firstName.message}</span>}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Apellido Paterno *</label>
+                            <label className="text-sm font-bold text-gray-700">Apellido Paterno *</label>
                             <input
                                 {...register('paternalSurname')}
                                 onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                 placeholder="Ej. PÉREZ"
                             />
                             {errors.paternalSurname && <span className="text-red-400 text-xs">{errors.paternalSurname.message}</span>}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Apellido Materno</label>
+                            <label className="text-sm font-bold text-gray-700">Apellido Materno</label>
                             <input
                                 {...register('maternalSurname')}
                                 onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
@@ -220,7 +220,7 @@ const TeacherFormPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                          <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Email *</label>
+                            <label className="text-sm font-bold text-gray-700">Email *</label>
                             <input
                                 {...register('email')}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -229,7 +229,7 @@ const TeacherFormPage = () => {
                             {errors.email && <span className="text-red-400 text-xs">{errors.email.message}</span>}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Teléfono</label>
+                            <label className="text-sm font-bold text-gray-700">Teléfono</label>
                             <input
                                 {...register('phone')}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -240,7 +240,7 @@ const TeacherFormPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Tipo Documento *</label>
+                            <label className="text-sm font-bold text-gray-700">Tipo Documento *</label>
                             <select
                                 {...register('documentType')}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -253,7 +253,7 @@ const TeacherFormPage = () => {
                             {errors.documentType && <span className="text-red-400 text-xs">{errors.documentType.message}</span>}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Número Documento *</label>
+                            <label className="text-sm font-bold text-gray-700">Número Documento *</label>
                             <input
                                 {...register('documentNumber')}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -265,11 +265,11 @@ const TeacherFormPage = () => {
                 </div>
 
                 {/* Professional Information */}
-                <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 space-y-4">
-                    <h2 className="text-lg font-semibold text-white border-b border-slate-700 pb-2">Información Profesional</h2>
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                    <h2 className="text-lg font-bold text-[#004694] border-b border-gray-100 pb-2">Información Profesional</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Especialidad *</label>
+                            <label className="text-sm font-bold text-gray-700">Especialidad *</label>
                             <input
                                 {...register('specialization')}
                                 onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}
@@ -279,7 +279,7 @@ const TeacherFormPage = () => {
                             {errors.specialization && <span className="text-red-400 text-xs">{errors.specialization.message}</span>}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Fecha de Contratación *</label>
+                            <label className="text-sm font-bold text-gray-700">Fecha de Contratación *</label>
                             <input
                                 type="date"
                                 {...register('hireDate')}
@@ -291,7 +291,7 @@ const TeacherFormPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300">Tipo de Contrato *</label>
+                            <label className="text-sm font-bold text-gray-700">Tipo de Contrato *</label>
                             <select
                                 {...register('contractType')}
                                 className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -303,7 +303,7 @@ const TeacherFormPage = () => {
                             {errors.contractType && <span className="text-red-400 text-xs">{errors.contractType.message}</span>}
                         </div>
                         <div className="space-y-2">
-                             <label className="text-sm font-medium text-slate-300">Tarifa por Hora (Opcional)</label>
+                             <label className="text-sm font-bold text-gray-700">Tarifa por Hora (Opcional)</label>
                              <input
                                  type="number"
                                  step="0.01"
@@ -315,9 +315,9 @@ const TeacherFormPage = () => {
                     </div>
                     
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-300">Hoja de Vida (CV)</label>
+                        <label className="text-sm font-bold text-gray-700">Hoja de Vida (CV)</label>
                         <div className="flex items-center gap-4">
-                            <label className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg cursor-pointer transition-colors text-white text-sm">
+                            <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer transition-colors text-gray-700 text-sm border border-gray-300">
                                 <Upload size={16} />
                                 <span>{cvFile ? cvFile.name : 'Subir CV (PDF)'}</span>
                                 <input 
@@ -338,7 +338,7 @@ const TeacherFormPage = () => {
                                 </a>
                             )}
                         </div>
-                        <p className="text-xs text-slate-500">Formato PDF, máx. 5MB</p>
+                        <p className="text-xs text-gray-500">Formato PDF, máx. 5MB</p>
                     </div>
                 </div>
 
@@ -346,13 +346,13 @@ const TeacherFormPage = () => {
                     <button
                         type="button"
                         onClick={() => navigate('/dashboard/teachers')}
-                        className="px-6 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition-colors"
+                        className="px-6 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
                     >
                         Cancelar
                     </button>
                     <button
                         type="submit"
-                        className="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors flex items-center gap-2"
+                        className="px-6 py-2 rounded-lg bg-[#004694] text-white hover:bg-blue-700 transition-colors flex items-center gap-2"
                         disabled={isLoading}
                     >
                         <Save size={20} />

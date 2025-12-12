@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useTeacherStore } from '../../store/teacher.store';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit2, Trash2, User } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, User, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
 
@@ -23,49 +23,59 @@ const TeacherListPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-white">Docentes</h1>
-                    <p className="text-slate-400 mt-1">Gestión del personal académico</p>
+
+            {/* Hero Section */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#004694] via-[#005ba3] to-[#006fd6] p-8 text-white shadow-xl">
+                <div className="relative z-10">
+                    <h1 className="text-4xl font-extrabold tracking-tight mb-3 flex items-center gap-3">
+                        <BookOpen size={40} className="text-blue-200" />
+                        Gestión de Docentes
+                    </h1>
+                    <p className="text-blue-100 text-lg max-w-2xl font-medium">
+                        Administra el plantel docente, sus asignaciones y credenciales de acceso.
+                    </p>
                 </div>
-                <Link
-                    to="/dashboard/teachers/new"
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 right-20 -mb-10 w-40 h-40 bg-blue-400/20 rounded-full blur-2xl"></div>
+            </div>
+
+            {/* Toolbar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+                <div className="relative flex-1 max-w-md">
+                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Buscar docentes..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#004694] focus:border-transparent sm:text-sm transition-all duration-200"
+                    />
+                </div>
+                <button
+                    onClick={() => navigate('new')}
+                    className="flex items-center gap-2 px-6 py-3 bg-[#004694] hover:bg-[#003da5] text-white font-bold rounded-xl shadow-md transition-all duration-200 transform hover:scale-105"
                 >
                     <Plus size={20} />
                     Nuevo Docente
-                </Link>
-            </div>
-
-            {/* Search Bar */}
-            <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por nombre, documento o especialidad..."
-                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-            </div>
-
+                </button>
+            </div>            
             {/* Table */}
-            <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 overflow-hidden">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-slate-700/50 text-slate-400 text-sm bg-slate-900/20">
-                                <th className="px-6 py-4 font-medium">Foto</th>
-                                <th className="px-6 py-4 font-medium">Nombre Completo</th>
-                                <th className="px-6 py-4 font-medium">Especialidad</th>
-                                <th className="px-6 py-4 font-medium">Contrato</th>
-                                <th className="px-6 py-4 font-medium">Email / Contacto</th>
-                                <th className="px-6 py-4 font-medium text-center">Acciones</th>
+                            <tr className="border-b border-[#003da5] text-white text-sm bg-[#004694]">
+                                <th className="px-6 py-4 font-bold uppercase text-xs">Foto</th>
+                                <th className="px-6 py-4 font-bold uppercase text-xs">Nombre Completo</th>
+                                <th className="px-6 py-4 font-bold uppercase text-xs">Especialidad</th>
+                                <th className="px-6 py-4 font-bold uppercase text-xs">Contrato</th>
+                                <th className="px-6 py-4 font-bold uppercase text-xs">Email / Contacto</th>
+                                <th className="px-6 py-4 font-bold uppercase text-xs text-center">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-700/50">
+                        <tbody className="divide-y divide-gray-100">
                             <AnimatePresence>
                                 {isLoading ? (
                                     <tr>
@@ -76,7 +86,7 @@ const TeacherListPage = () => {
                                 ) : filteredTeachers.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="text-center py-8 text-slate-400">
-                                            No se encontraron docentes registados.
+                                            No se encontraron docentes registrados.
                                         </td>
                                     </tr>
                                 ) : (
@@ -86,7 +96,7 @@ const TeacherListPage = () => {
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
-                                            className="hover:bg-slate-700/30 transition-colors group"
+                                            className="hover:bg-gray-50 transition-colors group"
                                         >
                                             <td className="px-6 py-4">
                                                 {teacher.user.profileImageUrl ? (
@@ -96,33 +106,33 @@ const TeacherListPage = () => {
                                                         className="w-10 h-10 rounded-full object-cover border border-white/20"
                                                     />
                                                 ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#004694]">
                                                         <User size={20} />
                                                     </div>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="font-medium text-white">
+                                                <div className="font-bold text-gray-900">
                                                     {teacher.user.firstName} {teacher.user.paternalSurname} {teacher.user.maternalSurname}
                                                 </div>
-                                                <div className="text-sm text-slate-400">
+                                                <div className="text-sm text-gray-500">
                                                     {teacher.documentType}: {teacher.documentNumber}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-300">
+                                            <td className="px-6 py-4 text-gray-600">
                                                 {teacher.specialization || 'Sin asignar'}
                                             </td>
                                             <td className="px-6 py-4">
                                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    teacher.contractType === 'FULL_TIME' ? 'bg-green-500/10 text-green-400' :
-                                                    teacher.contractType === 'PART_TIME' ? 'bg-yellow-500/10 text-yellow-400' :
-                                                    'bg-blue-500/10 text-blue-400'
+                                                    teacher.contractType === 'FULL_TIME' ? 'bg-green-50 text-green-700 border border-green-200' :
+                                                    teacher.contractType === 'PART_TIME' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                                                    'bg-blue-50 text-blue-700 border border-blue-200'
                                                 }`}>
                                                     {teacher.contractType === 'FULL_TIME' ? 'Tiempo Completo' :
                                                      teacher.contractType === 'PART_TIME' ? 'Medio Tiempo' : 'Externo'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-slate-400">
+                                            <td className="px-6 py-4 text-sm text-gray-500">
                                                 <div className="flex flex-col gap-1">
                                                     <span>{teacher.user.email}</span>
                                                     <span>{teacher.user.phone || '-'}</span>
@@ -132,7 +142,7 @@ const TeacherListPage = () => {
                                                 <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button 
                                                         onClick={() => navigate(`/dashboard/teachers/${teacher.id}/edit`)}
-                                                        className="p-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg transition-colors"
+                                                        className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors"
                                                         title="Editar"
                                                     >
                                                         <Edit2 size={18} />
@@ -163,7 +173,7 @@ const TeacherListPage = () => {
                                                                 }
                                                             })
                                                         }}
-                                                        className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
+                                                        className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
                                                         title="Eliminar"
                                                     >
                                                         <Trash2 size={18} />

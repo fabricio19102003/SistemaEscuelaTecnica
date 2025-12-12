@@ -83,110 +83,123 @@ const GroupListPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Gestión de Grupos</h1>
-                    <p className="text-slate-400">Administra los grupos académicos y sus horarios</p>
+            {/* Hero Section */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#004694] via-[#005ba3] to-[#006fd6] p-8 text-white shadow-xl">
+                <div className="relative z-10">
+                    <h1 className="text-4xl font-extrabold tracking-tight mb-3 flex items-center gap-3">
+                        <Users size={40} className="text-blue-200" />
+                        Gestión de Grupos
+                    </h1>
+                    <p className="text-blue-100 text-lg max-w-2xl font-medium">
+                        Administra los grupos académicos, asignación de docentes y horarios de clases.
+                    </p>
+                </div>
+                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-0 right-20 -mb-10 w-40 h-40 bg-blue-400/20 rounded-full blur-2xl"></div>
+            </div>
+
+            {/* Toolbar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+                <div className="relative flex-1 max-w-md">
+                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre o código..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#004694] focus:border-transparent sm:text-sm transition-all duration-200"
+                    />
                 </div>
                 <button
                     onClick={() => navigate('/dashboard/groups/new')}
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                    className="flex items-center gap-2 px-6 py-3 bg-[#004694] hover:bg-[#003da5] text-white font-bold rounded-xl shadow-md transition-all transform hover:scale-105"
                 >
                     <Plus size={20} />
                     Nuevo Grupo
                 </button>
             </div>
 
-            <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-4">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por nombre o código..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                    />
-                </div>
-            </div>
-
             {isLoading ? (
-                <div className="text-center text-slate-400 py-8">Cargando grupos...</div>
+                <div className="text-center text-gray-500 py-8">Cargando grupos...</div>
             ) : (
-                <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                     <table className="w-full text-left">
-                        <thead className="bg-slate-800 border-b border-slate-700">
+                        <thead className="bg-[#004694] border-b border-[#003da5]">
                             <tr>
-                                <th className="p-4 text-slate-300 font-medium">Grupo</th>
-                                <th className="p-4 text-slate-300 font-medium">Curso / Nivel</th>
-                                <th className="p-4 text-slate-300 font-medium">Docente</th>
-                                <th className="p-4 text-slate-300 font-medium">Horario</th>
-                                <th className="p-4 text-slate-300 font-medium">Estado</th>
-                                <th className="p-4 text-slate-300 font-medium text-right">Acciones</th>
+                                <th className="p-4 text-white font-bold uppercase text-xs">Grupo</th>
+                                <th className="p-4 text-white font-bold uppercase text-xs">Curso / Nivel</th>
+                                <th className="p-4 text-white font-bold uppercase text-xs">Docente</th>
+                                <th className="p-4 text-white font-bold uppercase text-xs">Horario</th>
+                                <th className="p-4 text-white font-bold uppercase text-xs">Estado</th>
+                                <th className="p-4 text-white font-bold uppercase text-xs text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-700/50">
+                        <tbody className="divide-y divide-gray-100">
                             {filteredGroups.map((group) => (
-                                <tr key={group.id} className="hover:bg-slate-800/50 transition-colors">
+                                <tr key={group.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-slate-700 flex items-center justify-center">
-                                                <Users className="text-slate-400" size={20} />
+                                            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
+                                                <Users className="text-[#004694]" size={20} />
                                             </div>
                                             <div>
-                                                <p className="font-medium text-white">{group.name}</p>
-                                                <span className="bg-slate-700/50 px-2 py-0.5 rounded text-xs font-mono text-slate-300">
+                                                <p className="font-bold text-gray-900">{group.name}</p>
+                                                <span className="bg-gray-100 px-2 py-0.5 rounded text-xs font-mono text-gray-600 border border-gray-200">
                                                     {group.code}
                                                 </span>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-4 text-slate-300">
+                                    <td className="p-4 text-gray-600">
                                         <div className="flex flex-col">
-                                            <span className="text-white font-medium">
+                                            <span className="text-gray-900 font-medium">
                                                 {group.level?.course?.name || 'Curso desconocido'}
                                             </span>
-                                            <span className="text-xs text-slate-400">
+                                            <span className="text-xs text-gray-500">
                                                 {group.level?.name || 'Nivel desconocido'}
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="p-4 text-slate-300">
+                                    <td className="p-4 text-gray-600">
                                         {group.teacher?.user ? (
-                                            <span>
+                                            <span className="text-gray-900">
                                                 {group.teacher.user.firstName} {group.teacher.user.paternalSurname}
                                             </span>
                                         ) : (
-                                            <span className="text-slate-500 italic">Sin asignar</span>
+                                            <span className="text-gray-400 italic">Sin asignar</span>
                                         )}
                                     </td>
-                                    <td className="p-4 text-slate-300">
+                                    <td className="p-4 text-gray-600">
                                         <div className="flex items-center gap-2">
-                                            <Calendar size={16} className="text-slate-400" />
+                                            <Calendar size={16} className="text-gray-400" />
                                             <span className="text-sm">{formatSchedule(group.schedules || [])}</span>
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-xs font-semibold
-                                            ${group.status === 'OPEN' ? 'bg-green-500/10 text-green-500' :
-                                              group.status === 'CANCELLED' ? 'bg-red-500/10 text-red-500' :
-                                              group.status === 'COMPLETED' ? 'bg-blue-500/10 text-blue-500' :
-                                              'bg-slate-500/10 text-slate-500'}`}>
-                                            {group.status}
+                                        <span className={`px-2 py-1 rounded text-xs font-bold border
+                                            ${group.status === 'OPEN' ? 'bg-green-50 text-green-700 border-green-200' :
+                                              group.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-200' :
+                                              group.status === 'COMPLETED' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                              'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                                            {group.status === 'OPEN' ? 'ABIERTO' : 
+                                             group.status === 'CANCELLED' ? 'CANCELADO' :
+                                             group.status === 'COMPLETED' ? 'COMPLETADO' : group.status}
                                         </span>
                                     </td>
                                     <td className="p-4 text-right">
                                         <div className="flex justify-end gap-2">
                                             <button
                                                 onClick={() => navigate(`/dashboard/groups/${group.id}`)}
-                                                className="p-2 hover:bg-slate-700 rounded-lg text-blue-400 transition-colors"
+                                                className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
                                                 title="Editar"
                                             >
                                                 <Edit size={18} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(group.id)}
-                                                className="p-2 hover:bg-slate-700 rounded-lg text-red-400 transition-colors"
+                                                className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
                                                 title="Eliminar"
                                             >
                                                 <Trash size={18} />
@@ -197,7 +210,7 @@ const GroupListPage = () => {
                             ))}
                             {filteredGroups.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="p-8 text-center text-slate-400">
+                                    <td colSpan={6} className="p-8 text-center text-gray-500">
                                         No se encontraron grupos
                                     </td>
                                 </tr>

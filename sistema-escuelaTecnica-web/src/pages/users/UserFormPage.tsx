@@ -123,15 +123,15 @@ const UserFormPage: React.FC = () => {
             <div className="flex items-center gap-4 mb-8">
                 <button 
                     onClick={() => navigate('/dashboard/users')}
-                    className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#004694] transition-colors"
                 >
                     <ArrowLeft size={24} />
                 </button>
                 <div>
-                    <h1 className="text-3xl font-bold text-white">
+                    <h1 className="text-3xl font-bold text-[#004694]">
                         {isEditing ? 'Editar Usuario' : 'Nuevo Usuario'}
                     </h1>
-                    <p className="text-gray-400">
+                    <p className="text-gray-500">
                         {isEditing ? 'Modificar datos y roles del usuario.' : 'Registrar un nuevo usuario en el sistema.'}
                     </p>
                 </div>
@@ -144,73 +144,73 @@ const UserFormPage: React.FC = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="bg-slate-800/50 p-6 md:p-8 rounded-2xl border border-slate-700/50 shadow-xl backdrop-blur-sm">
-                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-700">
-                        <UserIcon className="text-blue-400" size={24} />
-                        <h3 className="text-xl font-semibold text-white">Información Personal</h3>
+                <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                        <UserIcon className="text-[#004694]" size={24} />
+                        <h3 className="text-xl font-bold text-[#004694]">Información Personal</h3>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                             <label className="block text-sm font-medium text-gray-400 mb-2">Nombre</label>
+                             <label className="block text-sm font-bold text-gray-700 mb-2">Nombre</label>
                              <input 
                                 type="text"
                                 required
                                 value={formData.firstName}
                                 onChange={e => setFormData({...formData, firstName: e.target.value})}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 transition-all"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                              />
                         </div>
                         <div>
-                             <label className="block text-sm font-medium text-gray-400 mb-2">Apellido Paterno</label>
+                             <label className="block text-sm font-bold text-gray-700 mb-2">Apellido Paterno</label>
                              <input 
                                 type="text"
                                 required
                                 value={formData.paternalSurname}
                                 onChange={e => setFormData({...formData, paternalSurname: e.target.value})}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 transition-all"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                              />
                         </div>
                         <div>
-                             <label className="block text-sm font-medium text-gray-400 mb-2">Apellido Materno</label>
+                             <label className="block text-sm font-bold text-gray-700 mb-2">Apellido Materno</label>
                              <input 
                                 type="text"
                                 value={formData.maternalSurname}
                                 onChange={e => setFormData({...formData, maternalSurname: e.target.value})}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 transition-all"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                              />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-slate-800/50 p-6 md:p-8 rounded-2xl border border-slate-700/50 shadow-xl backdrop-blur-sm">
-                     <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-700">
-                        <Lock className="text-purple-400" size={24} />
-                        <h3 className="text-xl font-semibold text-white">Credenciales de Acceso</h3>
+                <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm">
+                     <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                        <Lock className="text-purple-600" size={24} />
+                        <h3 className="text-xl font-bold text-[#004694]">Credenciales de Acceso</h3>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                             <label className="block text-sm font-medium text-gray-400 mb-2">Nombre de Usuario</label>
+                             <label className="block text-sm font-bold text-gray-700 mb-2">Nombre de Usuario</label>
                              <input 
                                 type="text"
                                 required
                                 value={formData.username}
                                 onChange={e => setFormData({...formData, username: e.target.value})}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 transition-all"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                              />
                         </div>
                         <div>
-                             <label className="block text-sm font-medium text-gray-400 mb-2">Correo Electrónico</label>
+                             <label className="block text-sm font-bold text-gray-700 mb-2">Correo Electrónico</label>
                              <input 
                                 type="email"
                                 value={formData.email}
                                 onChange={e => setFormData({...formData, email: e.target.value})}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 transition-all"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                              />
                         </div>
                         <div className="md:col-span-2">
-                             <label className="block text-sm font-medium text-gray-400 mb-2">
+                             <label className="block text-sm font-bold text-gray-700 mb-2">
                                 {isEditing ? 'Nueva Contraseña (dejar en blanco para mantener)' : 'Contraseña'}
                              </label>
                              <input 
@@ -218,16 +218,16 @@ const UserFormPage: React.FC = () => {
                                 required={!isEditing}
                                 value={formData.password}
                                 onChange={e => setFormData({...formData, password: e.target.value})}
-                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 transition-all"
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                              />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-slate-800/50 p-6 md:p-8 rounded-2xl border border-slate-700/50 shadow-xl backdrop-blur-sm">
-                     <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-700">
-                        <Shield className="text-emerald-400" size={28} />
-                        <h3 className="text-2xl font-semibold text-white">Roles y Permisos</h3>
+                <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm">
+                     <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
+                        <Shield className="text-emerald-600" size={28} />
+                        <h3 className="text-2xl font-bold text-[#004694]">Roles y Permisos</h3>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -237,24 +237,24 @@ const UserFormPage: React.FC = () => {
                                 className={`
                                     cursor-pointer p-6 rounded-xl border-2 transition-all duration-200
                                     ${formData.roles.includes(role.id) 
-                                        ? 'bg-blue-600/20 border-blue-500 ring-0' 
-                                        : 'bg-slate-900/50 border-slate-700 hover:border-slate-500'}
+                                        ? 'bg-blue-50 border-blue-500 ring-0' 
+                                        : 'bg-white border-gray-200 hover:border-gray-300'}
                                 `}
                             >
                                 <div className="flex items-center gap-4">
                                     <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
                                         formData.roles.includes(role.id) 
-                                            ? 'bg-blue-500 border-blue-500 text-white' 
-                                            : 'border-gray-500'
+                                            ? 'bg-blue-600 border-blue-600 text-white' 
+                                            : 'border-gray-400 bg-gray-50'
                                     }`}>
                                         {formData.roles.includes(role.id) && <span className="text-sm font-bold">✓</span>}
                                     </div>
-                                    <span className={`text-lg font-medium ${formData.roles.includes(role.id) ? 'text-white' : 'text-gray-300'}`}>
+                                    <span className={`text-lg font-bold ${formData.roles.includes(role.id) ? 'text-blue-900' : 'text-gray-700'}`}>
                                         {ROLE_TRANSLATIONS[role.name] || role.name}
                                     </span>
                                 </div>
                                 {role.description && (
-                                    <p className="text-gray-400 text-sm mt-2 ml-10">
+                                    <p className="text-gray-500 text-sm mt-2 ml-10">
                                         {role.description}
                                     </p>
                                 )}
@@ -273,14 +273,14 @@ const UserFormPage: React.FC = () => {
                     <button 
                         type="button"
                         onClick={() => navigate('/dashboard/users')}
-                        className="px-6 py-3 text-gray-400 hover:text-white font-medium transition-colors"
+                        className="px-6 py-3 text-gray-500 hover:bg-gray-100 hover:text-[#004694] rounded-lg font-medium transition-colors border border-transparent hover:border-gray-200"
                     >
                         Cancelar
                     </button>
                     <button 
                         type="submit"
                         disabled={loading}
-                        className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-500/25 transition-all transform hover:scale-[1.02]"
+                        className="flex items-center gap-2 bg-[#004694] hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-sm transition-all transform hover:scale-[1.02]"
                     >
                         <Save size={20} />
                         {loading ? 'Guardando...' : 'Guardar Usuario'}
