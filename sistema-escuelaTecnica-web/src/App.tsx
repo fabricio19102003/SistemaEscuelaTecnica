@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import AuthLayout from './components/layouts/AuthLayout';
+// import AuthLayout from './components/layouts/AuthLayout';
 import DashboardLayout from './components/layouts/DashboardLayout';
 import LoginPage from './pages/auth/LoginPage';
 import { useAuthStore } from './store/auth.store';
@@ -54,6 +54,12 @@ const PublicRoute = ({ children }: { children: JSX.Element }) => {
         if (user?.roles.includes('TEACHER')) {
             return <Navigate to="/teacher" replace />;
         }
+        if (user?.roles.includes('STUDENT')) {
+            return <Navigate to="/student/portal" replace />;
+        }
+        if (user?.roles.includes('GUARDIAN')) {
+            return <Navigate to="/guardian/portal" replace />;
+        }
         return <Navigate to="/dashboard" replace />;
     }
     return children;
@@ -62,16 +68,22 @@ const PublicRoute = ({ children }: { children: JSX.Element }) => {
 import TeacherDashboardLayout from './layouts/TeacherDashboardLayout';
 import TeacherCoursesPage from './pages/teacher/TeacherCoursesPage';
 import TeacherCourseDetailPage from './pages/teacher/TeacherCourseDetailPage';
+import TeacherNotificationsPage from './pages/teacher/TeacherNotificationsPage';
 import TeacherAttendancePage from './pages/teacher/TeacherAttendancePage';
+import StudentPortalPage from './pages/student/StudentPortalPage';
+import StudentCoursePage from './pages/student/StudentCoursePage';
+import StudentNotificationsPage from './pages/student/StudentNotificationsPage';
+import GuardianPortalPage from './pages/guardian/GuardianPortalPage';
+import GuardianStudentCoursePage from './pages/guardian/GuardianStudentCoursePage';
+import StudentLayout from './layouts/StudentLayout';
+import GuardianLayout from './layouts/GuardianLayout';
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
                 {/* Public Routes */}
-                <Route element={<AuthLayout />}>
-                    <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-                </Route>
+                <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
 
                 {/* Teacher Routes */}
                 <Route path="/teacher" element={
@@ -87,8 +99,35 @@ function App() {
                     {/* Module: Grades (Enty) */}
                     <Route path="grades" element={<TeacherCoursesPage basePath="/teacher/grades" />} />
                     <Route path="grades/:groupId" element={<TeacherCourseDetailPage defaultTab="grades" />} />
+                    
+                    <Route path="notifications" element={<TeacherNotificationsPage />} />
 
                     <Route index element={<Navigate to="courses" replace />} />
+                </Route>
+
+                {/* Student Routes */}
+                <Route path="/student" element={
+                    <ProtectedRoute allowedRoles={['STUDENT']}>
+                        <StudentLayout />
+                    </ProtectedRoute>
+                }>
+                    <Route path="portal" element={<StudentPortalPage />} />
+                    <Route path="course/:enrollmentId" element={<StudentCoursePage />} />
+                    <Route path="notifications" element={<StudentNotificationsPage />} />
+                    {/* Default redirect to portal */}
+                    <Route index element={<Navigate to="portal" replace />} />
+                </Route>
+
+                {/* Guardian Routes */}
+                <Route path="/guardian" element={
+                    <ProtectedRoute allowedRoles={['GUARDIAN']}>
+                        <GuardianLayout />
+                    </ProtectedRoute>
+                }>
+                    <Route path="portal" element={<GuardianPortalPage />} />
+                    <Route path="student/:studentId/course/:enrollmentId" element={<GuardianStudentCoursePage />} />
+                    {/* Default redirect to portal */}
+                    <Route index element={<Navigate to="portal" replace />} />
                 </Route>
 
                 {/* Admin/Staff Protected Routes */}

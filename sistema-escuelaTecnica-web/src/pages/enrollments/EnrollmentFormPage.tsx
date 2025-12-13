@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useStudentStore } from '../../store/student.store';
-
 import { useEnrollmentStore } from '../../store/enrollment.store';
 import { useCourseStore } from '../../store/course.store';
+import { useAuthStore } from '../../store/auth.store';
 import { ArrowLeft, Save, GraduationCap, Users, Calculator, Download, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
@@ -15,6 +15,7 @@ const EnrollmentFormPage = () => {
     const { students, fetchStudents } = useStudentStore();
     const { courses, fetchCourses } = useCourseStore();
     const { createEnrollment } = useEnrollmentStore();
+    const { user } = useAuthStore();
     
     // Local state for calculation and modal
     const [selectedStudentId, setSelectedStudentId] = useState<string>('');
@@ -24,44 +25,17 @@ const EnrollmentFormPage = () => {
     
     const [showPdfModal, setShowPdfModal] = useState(false);
     const [enrollmentResult, setEnrollmentResult] = useState<any>(null);
+    const [clientIp, setClientIp] = useState('Cargando...');
 
     const { handleSubmit, formState: { isSubmitting } } = useForm();
-
-    const handleDownloadPDF = async () => {
-        if (!enrollmentResult) return;
-        
-        const u = enrollmentResult.student.user;
-        const fullName = `${u.firstName} ${u.paternalSurname} ${u.maternalSurname || ''}`.trim().replace(/\s+/g, '_').toUpperCase();
-        const period = new Date().getMonth() < 6 ? `1-${new Date().getFullYear()}` : `2-${new Date().getFullYear()}`;
-        const courseName = enrollmentResult.group.level.course.name.replace(/\s+/g, '_').toUpperCase();
-        const fileName = `${fullName}_${period}_${courseName}.pdf`;
-
-        try {
-            const blob = await pdf(
-                <EnrollmentPDF data={enrollmentResult} credentials={enrollmentResult.credentials} />
-            ).toBlob();
-            
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            Swal.fire({
-                title: 'Error',
-                text: 'No se pudo generar el PDF',
-                icon: 'error',
-                background: '#1f2937', 
-                color: '#fff'
-            });
-        }
-    };
-
+    
     useEffect(() => {
+        // Fetch IP for audit logs
+        fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => setClientIp(data.ip))
+            .catch(() => setClientIp('No disponible'));
+            
         fetchStudents();
         fetchCourses();
     }, [fetchStudents, fetchCourses]);
@@ -129,6 +103,45 @@ const EnrollmentFormPage = () => {
 
     }, [selectedStudentId, selectedCourseId, students, courses]);
 
+    const handleDownloadPDF = async () => {
+        if (!enrollmentResult) return;
+        
+        const u = enrollmentResult.student.user;
+        const fullName = `${u.firstName} ${u.paternalSurname} ${u.maternalSurname || ''}`.trim().replace(/\s+/g, '_').toUpperCase();
+        const period = new Date().getMonth() < 6 ? `1-${new Date().getFullYear()}` : `2-${new Date().getFullYear()}`;
+        const courseName = enrollmentResult.group.level.course.name.replace(/\s+/g, '_').toUpperCase();
+        const fileName = `${fullName}_${period}_${courseName}.pdf`;
+
+        try {
+            const blob = await pdf(
+                <EnrollmentPDF 
+                    data={enrollmentResult} 
+                    credentials={enrollmentResult.credentials}
+                    userWhoGenerated={user ? `${user.firstName} ${user.paternalSurname}` : 'Usuario Sistema'}
+                    clientIp={clientIp}
+                />
+            ).toBlob();
+            
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudo generar el PDF',
+                icon: 'error',
+                background: '#1f2937', 
+                color: '#fff'
+            });
+        }
+    };
+
     const onSubmit = async () => {
         try {
             const result = await createEnrollment({
@@ -184,7 +197,12 @@ const EnrollmentFormPage = () => {
                         </div>
                         <div className="flex-1 bg-gray-100 overflow-hidden">
                             <PDFViewer width="100%" height="100%" className="w-full h-full">
-                                <EnrollmentPDF data={enrollmentResult} credentials={enrollmentResult.credentials} />
+                                <EnrollmentPDF 
+                                    data={enrollmentResult} 
+                                    credentials={enrollmentResult.credentials}
+                                    userWhoGenerated={user ? `${user.firstName} ${user.paternalSurname}` : 'Usuario Sistema'}
+                                    clientIp={clientIp}
+                                />
                             </PDFViewer>
                         </div>
                     </div>

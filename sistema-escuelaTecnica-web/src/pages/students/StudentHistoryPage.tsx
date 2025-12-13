@@ -131,6 +131,12 @@ const StudentHistoryPage = () => {
                         Previsualizar
                     </button>
                     {/* Only render PDF Link when not loading to prevent crash */}
+                    {(() => {
+                        if (!isLoading && selectedStudent) {
+                             console.log('Rendering PDF with:', { student: selectedStudent, history: academicHistory });
+                        }
+                        return null;
+                    })()}
                     {!isLoading && selectedStudent && (
                         <PDFDownloadLink
                             document={

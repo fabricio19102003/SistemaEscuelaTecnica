@@ -12,6 +12,10 @@ import enrollmentRoutes from './enrollment.routes.js';
 import gradeRoutes from './grade.routes.js';
 import userRoutes from './user.routes.js';
 import attendanceRoutes from './attendance.routes.js';
+import studentPortalRoutes from './student-portal.routes.js';
+import guardianPortalRoutes from './guardian-portal.routes.js';
+import statsRoutes from './stats.routes.js';
+import notificationRoutes from './notification.routes.js';
 
 const router = Router();
 
@@ -28,5 +32,9 @@ router.use('/enrollments', enrollmentRoutes);
 router.use('/grades', gradeRoutes);
 router.use('/users', userRoutes);
 router.use('/attendance', attendanceRoutes);
+router.use('/student-portal', studentPortalRoutes);
+router.use('/guardian-portal', guardianPortalRoutes);
+router.use('/stats', statsRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

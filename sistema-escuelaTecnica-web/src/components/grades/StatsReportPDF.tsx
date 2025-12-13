@@ -92,6 +92,9 @@ interface StatsData {
     passRate: number;
     competencyAverages: { name: string; average: number }[];
     studentPerformance: { name: string; average: number; status: string }[];
+    financialStats?: { name: string; totalRevenue: number }[];
+    topStudents?: { name: string; average: number }[];
+    bestIndividualGrades?: { studentName: string; course: string; evaluation: string; grade: number }[];
 }
 
 const StatsReportPDF: React.FC<{ data: StatsData }> = ({ data }) => {
@@ -119,6 +122,59 @@ const StatsReportPDF: React.FC<{ data: StatsData }> = ({ data }) => {
                         <Text style={styles.cardValue}>{data.passRate.toFixed(1)}%</Text>
                     </View>
                 </View>
+
+                {/* Financial Stats Section */}
+                {data.financialStats && data.financialStats.length > 0 && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Ingresos Recaudados</Text>
+                        <View style={[styles.row, styles.headerRow]}>
+                            <Text style={[styles.col1, styles.headerText, { width: '70% '}]}>Curso</Text>
+                            <Text style={[styles.col2, styles.headerText, { width: '30%' }]}>Ingresos (Bs)</Text>
+                        </View>
+                        {data.financialStats.map((item, index) => (
+                            <View key={index} style={styles.row}>
+                                <Text style={[styles.col1, styles.text, { width: '70%' }]}>{item.name}</Text>
+                                <Text style={[styles.col2, styles.text, { width: '30%' }]}>{item.totalRevenue.toFixed(2)}</Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
+
+                {/* Top Students Section */}
+                {data.topStudents && data.topStudents.length > 0 && (
+                     <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Mejores Promedios (Top 5)</Text>
+                        <View style={[styles.row, styles.headerRow]}>
+                            <Text style={[styles.col1, styles.headerText, { width: '70%' }]}>Estudiante</Text>
+                            <Text style={[styles.col2, styles.headerText, { width: '30%' }]}>Promedio</Text>
+                        </View>
+                        {data.topStudents.map((student, index) => (
+                            <View key={index} style={styles.row}>
+                                <Text style={[styles.col1, styles.text, { width: '70%' }]}>{index + 1}. {student.name}</Text>
+                                <Text style={[styles.col2, styles.text, { width: '30%' }]}>{student.average.toFixed(1)}</Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
+
+                 {/* Best Individual Grades Section */}
+                 {data.bestIndividualGrades && data.bestIndividualGrades.length > 0 && (
+                     <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Mejores Notas Individuales (Top 5)</Text>
+                        <View style={[styles.row, styles.headerRow]}>
+                            <Text style={[styles.col1, styles.headerText, { width: '40%' }]}>Estudiante</Text>
+                            <Text style={[styles.col2, styles.headerText, { width: '30%' }]}>Competencia</Text>
+                            <Text style={[styles.col3, styles.headerText, { width: '30%' }]}>Nota</Text>
+                        </View>
+                        {data.bestIndividualGrades.map((item, index) => (
+                            <View key={index} style={styles.row}>
+                                <Text style={[styles.col1, styles.text, { width: '40%' }]}>{item.studentName}</Text>
+                                <Text style={[styles.col2, styles.text, { width: '30%' }]}>{item.evaluation}</Text>
+                                <Text style={[styles.col3, styles.text, { width: '30%' }]}>{item.grade}</Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
 
                 {/* Competency Analysis */}
                 <View style={styles.section}>

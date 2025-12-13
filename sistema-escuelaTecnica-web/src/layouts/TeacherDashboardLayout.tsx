@@ -1,17 +1,21 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
+import { useNotificationStore } from '../store/notification.store';
 import { 
     LogOut, 
     BookOpen,
     UserCircle,
     Menu,
     X,
-    LayoutDashboard
+    LayoutDashboard,
+    Bell
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 
 const TeacherDashboardLayout = () => {
     const { logout, user } = useAuthStore();
+    const { unreadCount, fetchNotifications } = useNotificationStore();
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,6 +28,35 @@ const TeacherDashboardLayout = () => {
     const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path);
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+    useEffect(() => {
+        const checkNotifications = async () => {
+            await fetchNotifications();
+        };
+        checkNotifications();
+    }, []);
+
+    useEffect(() => {
+        if (unreadCount > 0) {
+            const hasSeenAlert = sessionStorage.getItem('hasSeenNotificationAlert');
+            if (!hasSeenAlert) {
+                Swal.fire({
+                    title: '¡Tienes notificaciones nuevas!',
+                    text: `Tienes ${unreadCount} mensaje(s) sin leer.`,
+                    icon: 'info',
+                    confirmButtonText: 'Ver Notificaciones',
+                    showCancelButton: true,
+                    cancelButtonText: 'Más tarde',
+                    confirmButtonColor: '#004694'
+                }).then((result) => {
+                    sessionStorage.setItem('hasSeenNotificationAlert', 'true');
+                    if (result.isConfirmed) {
+                        navigate('/teacher/notifications');
+                    }
+                });
+            }
+        }
+    }, [unreadCount]);
 
     return (
         <div className="min-h-screen bg-gray-50 flex">
@@ -100,6 +133,31 @@ const TeacherDashboardLayout = () => {
                         <BookOpen size={20} className={isActive('/teacher/grades') ? 'text-white' : 'text-blue-200 group-hover:text-white transition-colors'} />
                         <span className="font-medium">Registro de Notas</span>
                     </button>
+
+                    <button
+                        onClick={() => {
+                            navigate('/teacher/notifications');
+                            setSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                            isActive('/teacher/notifications')
+                                ? 'bg-[#BF0811] text-white shadow-lg'
+                                : 'text-blue-100 hover:text-white hover:bg-white/10'
+                        }`}
+                    >
+                        <div className="relative">
+                            <Bell size={20} className={isActive('/teacher/notifications') ? 'text-white' : 'text-blue-200 group-hover:text-white transition-colors'} />
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#004694]"></span>
+                            )}
+                        </div>
+                        <span className="font-medium">Notificaciones</span>
+                        {unreadCount > 0 && (
+                            <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </button>
                 </nav>
 
                 <div className="p-4 border-t border-white/10">
@@ -111,6 +169,8 @@ const TeacherDashboardLayout = () => {
                         <span className="font-medium">Cerrar Sesión</span>
                     </button>
                 </div>
+
+
             </aside>
 
             {/* Main Content */}

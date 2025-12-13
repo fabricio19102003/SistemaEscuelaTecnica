@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCourseStore } from '../../store/course.store';
 import { useGradeStore } from '../../store/grade.store';
-import { ArrowLeft, PieChart, BarChart as BarChartIcon, Download, Search, School, AlertTriangle, TrendingDown } from 'lucide-react';
+import { getRevenueByCourse, type RevenueByCourse } from '../../services/stats.service';
+import { ArrowLeft, PieChart, BarChart as BarChartIcon, Download, Search, School, AlertTriangle, TrendingDown, DollarSign, Award, Star, Send } from 'lucide-react';
 import { 
     BarChart, 
     Bar, 
@@ -18,6 +19,7 @@ import {
 } from 'recharts';
 import { pdf } from '@react-pdf/renderer';
 import StatsReportPDF from '../../components/grades/StatsReportPDF';
+import { AdminNotificationModal } from '../../components/notifications/AdminNotificationModal';
 
 const COMPETENCIES = [
     { id: 'SPEAKING', label: 'Speaking', color: '#fbbf24' },
@@ -38,9 +40,16 @@ const GradeStatsPage = () => {
     // "all" = all courses
     const [selectedCourseId, setSelectedCourseId] = useState('');
     const [generatingPdf, setGeneratingPdf] = useState(false);
+    const [financialStats, setFinancialStats] = useState<RevenueByCourse[]>([]);
+    
+    // Notification Modal State
+    const [showNotifyModal, setShowNotifyModal] = useState(false);
+    const [notifyRecipients, setNotifyRecipients] = useState<number[]>([]);
+    const [notifyLabel, setNotifyLabel] = useState('');
 
     useEffect(() => {
         fetchCourses();
+        getRevenueByCourse().then(setFinancialStats).catch(console.error);
     }, [fetchCourses]);
 
     useEffect(() => {
@@ -65,16 +74,29 @@ const GradeStatsPage = () => {
         const compCounts: Record<string, number> = {};
         
         // Student Details & Risk Analysis
-        const studentPerformance: { name: string; average: number; status: string; course?: string }[] = [];
+        const studentPerformance: { userId: number; name: string; average: number; status: string; course?: string }[] = [];
         
+        // All Individual Grades for "Best Grades"
+        const allIndividualGrades: { 
+            studentName: string; 
+            course: string; 
+            evaluation: string; 
+            grade: number 
+        }[] = [];
+
         enrollments.forEach(enrollment => {
             const grades = enrollment.grades || [];
+            const courseName = enrollment.group?.level?.course?.name || 'Unknown';
+            const studentName = `${enrollment.student.user.paternalSurname} ${enrollment.student.user.firstName}`;
+            const userId = enrollment.student.user.id;
+
             if (grades.length === 0) {
                 studentPerformance.push({
-                    name: `${enrollment.student.user.paternalSurname} ${enrollment.student.user.firstName}`,
+                    userId,
+                    name: studentName,
                     average: 0,
                     status: 'Sin Notas',
-                    course: enrollment.group?.level?.course?.name
+                    course: courseName
                 });
                 return;
             }
@@ -87,10 +109,11 @@ const GradeStatsPage = () => {
             else failedCount++;
 
             studentPerformance.push({
-                name: `${enrollment.student.user.paternalSurname} ${enrollment.student.user.firstName}`,
+                userId,
+                name: studentName,
                 average: studentAvg,
                 status: studentAvg >= 51 ? 'Aprobado' : 'Reprobado',
-                course: enrollment.group?.level?.course?.name
+                course: courseName
             });
 
             grades.forEach(g => {
@@ -100,6 +123,14 @@ const GradeStatsPage = () => {
                 }
                 compSums[g.evaluationType] += Number(g.gradeValue);
                 compCounts[g.evaluationType]++;
+                
+                // Collect for Best Grades
+                allIndividualGrades.push({
+                    studentName,
+                    course: courseName,
+                    evaluation: g.evaluationType,
+                    grade: Number(g.gradeValue)
+                });
             });
         });
 
@@ -124,6 +155,17 @@ const GradeStatsPage = () => {
             .sort((a, b) => a.average - b.average)
             .slice(0, 5);
 
+        // Best Averages (Top 5)
+        const topStudents = [...studentPerformance]
+            .filter(s => s.average > 0)
+            .sort((a, b) => b.average - a.average)
+            .slice(0, 5);
+
+        // Best Individual Grades (Top 5)
+        const bestIndividualGrades = [...allIndividualGrades]
+            .sort((a, b) => b.grade - a.grade)
+            .slice(0, 5);
+
         return {
             totalStudents,
             averageScore: totalStudents > 0 && (passedCount + failedCount) > 0 ? totalScoreSum / (passedCount + failedCount) : 0,
@@ -132,9 +174,47 @@ const GradeStatsPage = () => {
             statusDistribution,
             studentPerformance,
             atRiskCount: atRiskStudents.length,
-            lowestGrades
+            lowestGrades,
+            topStudents,
+            bestIndividualGrades
         };
     }, [enrollments, selectedCourseId, loading]);
+
+    const handleNotifyRisk = () => {
+        if (!stats) return;
+        const recipientIds = stats.studentPerformance
+            .filter(s => s.average > 0 && s.average < 60)
+            .map(s => s.userId);
+        
+        if (recipientIds.length === 0) {
+            alert('No hay estudiantes en riesgo para notificar.');
+            return;
+        }
+
+        setNotifyRecipients(recipientIds);
+        setNotifyLabel('Estudiantes en Riesgo');
+        setShowNotifyModal(true);
+    };
+
+    const handleNotifyTop = () => {
+        if (!stats) return;
+        const recipientIds = stats.topStudents.map(s => s.userId);
+
+        if (recipientIds.length === 0) {
+            alert('No hay estudiantes destacados para notificar.');
+            return;
+        }
+
+        setNotifyRecipients(recipientIds);
+        setNotifyLabel('Top 5 Mejores Promedios');
+        setShowNotifyModal(true);
+    };
+
+    const handleNotifyGeneral = () => {
+        setNotifyRecipients([]); // Empty = Broadacast or Manual Selection
+        setNotifyLabel('');
+        setShowNotifyModal(true);
+    };
 
     const handleExportPDF = async () => {
         if (!stats) return;
@@ -145,7 +225,8 @@ const GradeStatsPage = () => {
                 courseName,
                 ...stats,
                 competencyAverages: stats.competencyAverages,
-                studentPerformance: stats.studentPerformance
+                studentPerformance: stats.studentPerformance,
+                financialStats // Include financial stats in PDF data
             };
 
             const blob = await pdf(<StatsReportPDF data={pdfData} />).toBlob();
@@ -174,17 +255,30 @@ const GradeStatsPage = () => {
                     <ArrowLeft size={20} />
                 </button>
                 <div className="flex-1 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-[#004694]">Estadísticas de Calificaciones</h2>
-                    {stats && (
-                        <button
-                            onClick={handleExportPDF}
-                            disabled={generatingPdf}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-                        >
-                            <Download size={18} />
-                            {generatingPdf ? 'Exportando...' : 'Exportar PDF'}
-                        </button>
-                    )}
+                    <h2 className="text-2xl font-bold text-[#004694] flex items-center gap-2">
+                        Estadísticas de Calificaciones
+                    </h2>
+                    <div className="flex gap-2">
+                        {stats && (
+                            <button
+                                onClick={handleNotifyGeneral}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                            >
+                                <Send size={18} />
+                                Enviar Mensaje
+                            </button>
+                        )}
+                        {stats && (
+                            <button
+                                onClick={handleExportPDF}
+                                disabled={generatingPdf}
+                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                            >
+                                <Download size={18} />
+                                {generatingPdf ? 'Exportando...' : 'Exportar PDF'}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -214,7 +308,8 @@ const GradeStatsPage = () => {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                        {/* ... Existing Cards ... */}
+                       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-blue-50 rounded-lg text-blue-600 border border-blue-100">
                                     <School size={24} />
@@ -248,7 +343,6 @@ const GradeStatsPage = () => {
                             </div>
                         </div>
                         
-                        {/* New Risk Cards */}
                         <div className="bg-white p-6 rounded-xl border border-red-200 shadow-sm relative overflow-hidden">
                              <div className="absolute top-0 right-0 p-2 opacity-5">
                                 <AlertTriangle size={60} className="text-red-500" />
@@ -281,9 +375,131 @@ const GradeStatsPage = () => {
                         </div>
                     </div>
 
+                    {/* Financial Stats Section */}
+                    {financialStats.length > 0 && (
+                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-bold text-emerald-700 mb-6 flex items-center gap-2">
+                                <DollarSign size={20} />
+                                {selectedCourseId === 'all' ? 'Ingresos Recaudados por Curso' : 'Resumen Financiero del Curso'}
+                            </h3>
+                            
+                            {selectedCourseId === 'all' ? (
+                                <div className="h-80 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={financialStats}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                                            <XAxis dataKey="name" stroke="#6b7280" tick={{fontSize: 12}} axisLine={false} tickLine={false} />
+                                            <YAxis stroke="#6b7280" axisLine={false} tickLine={false} tickFormatter={(val) => `Bs ${val}`}/>
+                                            <Tooltip 
+                                                cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
+                                                formatter={(value) => [`Bs ${value}`, 'Ingresos']}
+                                                contentStyle={{ 
+                                                    backgroundColor: '#fff', 
+                                                    borderColor: '#e5e7eb', 
+                                                    color: '#111827',
+                                                    borderRadius: '0.5rem'
+                                                }}
+                                            />
+                                            <Bar dataKey="totalRevenue" name="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} barSize={50} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-between bg-emerald-50 p-6 rounded-xl border border-emerald-100">
+                                    <div>
+                                        <p className="text-emerald-800 text-sm font-medium uppercase tracking-wide">Total Recaudado en este Curso</p>
+                                        <p className="text-4xl font-black text-emerald-600 mt-2">
+                                            Bs {financialStats.find(s => s.id === Number(selectedCourseId))?.totalRevenue.toFixed(2) || '0.00'}
+                                        </p>
+                                        <p className="text-emerald-600 mt-1 text-sm font-medium">
+                                            {financialStats.find(s => s.id === Number(selectedCourseId))?.totalStudents || 0} estudiantes contribuyentes
+                                        </p>
+                                    </div>
+                                    <div className="p-4 bg-white rounded-full shadow-sm text-emerald-500">
+                                        <DollarSign size={40} />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* NEW: Best Students & Best Grades Row */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Mejores Promedios */}
+                        <div className="bg-white rounded-xl border border-yellow-200 shadow-sm overflow-hidden flex flex-col">
+                            <div className="p-6 border-b border-yellow-100 bg-yellow-50 flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-yellow-700 flex items-center gap-2">
+                                    <Award size={20} />
+                                    Mejores Promedios (Top 5)
+                                </h3>
+                                <button 
+                                    onClick={handleNotifyTop}
+                                    className="text-yellow-700 hover:bg-yellow-100 p-2 rounded-lg text-xs font-bold uppercase transition-colors flex items-center gap-1"
+                                >
+                                    <Send size={14} /> Felicitar
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto flex-1">
+                                <table className="w-full text-left">
+                                    <thead className="bg-yellow-100 text-xs uppercase text-yellow-700 font-bold">
+                                        <tr>
+                                            <th className="px-6 py-4">Estudiante</th>
+                                            <th className="px-6 py-4 text-center">Promedio</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 text-sm">
+                                        {stats.topStudents.map((student, idx) => (
+                                            <tr key={idx} className="hover:bg-yellow-50/50 transition-colors">
+                                                <td className="px-6 py-4 text-gray-900 font-medium flex items-center gap-2">
+                                                    {idx === 0 && <Star size={14} className="text-yellow-500 fill-yellow-500" />}
+                                                    {student.name}
+                                                </td>
+                                                <td className="px-6 py-4 text-center font-bold text-yellow-700">
+                                                    {student.average.toFixed(1)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                         {/* Mejores Notas Individuales */}
+                         <div className="bg-white rounded-xl border border-purple-200 shadow-sm overflow-hidden flex flex-col">
+                            <div className="p-6 border-b border-purple-100 bg-purple-50">
+                                <h3 className="text-lg font-bold text-purple-700 flex items-center gap-2">
+                                    <Star size={20} />
+                                    Mejores Notas Individuales (Top 5)
+                                </h3>
+                            </div>
+                            <div className="overflow-x-auto flex-1">
+                                <table className="w-full text-left">
+                                    <thead className="bg-purple-100 text-xs uppercase text-purple-700 font-bold">
+                                        <tr>
+                                            <th className="px-6 py-4">Estudiante</th>
+                                            <th className="px-6 py-4">Competencia</th>
+                                            <th className="px-6 py-4 text-center">Nota</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100 text-sm">
+                                        {stats.bestIndividualGrades.map((item, idx) => (
+                                            <tr key={idx} className="hover:bg-purple-50/50 transition-colors">
+                                                <td className="px-6 py-4 text-gray-900 font-medium">{item.studentName}</td>
+                                                <td className="px-6 py-4 text-gray-500 text-xs uppercase">{item.evaluation}</td>
+                                                <td className="px-6 py-4 text-center font-bold text-purple-700">
+                                                    {item.grade}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Charts Row */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Bar Chart: Competencies */}
+                        {/* Bar Chart: Competencies - EXISTING */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                             <h3 className="text-lg font-bold text-[#004694] mb-6">Rendimiento por Competencia</h3>
                             <div className="h-80 w-full">
@@ -313,7 +529,7 @@ const GradeStatsPage = () => {
                             </div>
                         </div>
 
-                        {/* Pie Chart: Status Distribution */}
+                        {/* Pie Chart: Status Distribution - EXISTING */}
                         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                             <h3 className="text-lg font-bold text-[#004694] mb-6">Distribución de Estados</h3>
                             <div className="h-80 w-full flex justify-center items-center">
@@ -352,7 +568,7 @@ const GradeStatsPage = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Detailed Table */}
+                        {/* Detailed Table - EXISTING */}
                         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                             <div className="p-6 border-b border-gray-100 bg-gray-50/50">
                                 <h3 className="text-lg font-bold text-[#004694]">Detalle de Estudiantes</h3>
@@ -393,13 +609,19 @@ const GradeStatsPage = () => {
                             </div>
                         </div>
 
-                         {/* Lowest Grades / At Risk Table */}
+                         {/* Lowest Grades / At Risk Table - EXISTING */}
                          <div className="bg-white rounded-xl border border-red-200 shadow-sm overflow-hidden flex flex-col">
-                            <div className="p-6 border-b border-red-100 bg-red-50">
+                            <div className="p-6 border-b border-red-100 bg-red-50 flex justify-between items-center">
                                 <h3 className="text-lg font-bold text-red-700 flex items-center gap-2">
                                     <TrendingDown size={20} />
                                     Estudiantes con Menor Rendimiento
                                 </h3>
+                                <button 
+                                    onClick={handleNotifyRisk}
+                                    className="text-red-700 hover:bg-red-100 p-2 rounded-lg text-xs font-bold uppercase transition-colors flex items-center gap-1"
+                                >
+                                    <Send size={14} /> Notificar
+                                </button>
                             </div>
                             <div className="overflow-x-auto flex-1">
                                 <table className="w-full text-left">
@@ -438,6 +660,13 @@ const GradeStatsPage = () => {
                     <p className="text-gray-500 font-medium">Seleccione un curso o "Todos" para ver las estadísticas.</p>
                 </div>
             )}
+            {/* Notification Modal */}
+            <AdminNotificationModal 
+                isOpen={showNotifyModal} 
+                onClose={() => setShowNotifyModal(false)}
+                preSelectedRecipients={notifyRecipients}
+                recipientLabel={notifyLabel}
+            />
         </div>
     );
 };

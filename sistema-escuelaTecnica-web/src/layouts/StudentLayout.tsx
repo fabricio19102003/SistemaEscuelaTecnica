@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useNavigate, NavLink, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../../store/auth.store';
-import { LogOut, User, Menu, GraduationCap, Users, BookOpen, LayoutDashboard, School, FileSignature, ClipboardCheck, ClipboardList, Briefcase } from 'lucide-react';
-import { NotificationBell } from '../layout/NotificationBell';
-import logo from '../../assets/logo_school.png';
+import { useAuthStore } from '../store/auth.store';
 
-const DashboardLayout = () => {
+import { useNotificationStore } from '../store/notification.store';
+import { LogOut, User, Menu, LayoutDashboard, Bell } from 'lucide-react';
+import { NotificationBell } from '../components/layout/NotificationBell';
+import logo from '../assets/logo_school.png';
+import Swal from 'sweetalert2';
+
+const StudentLayout = () => {
     const { user, logout } = useAuthStore();
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
     const location = useLocation();
+
+    const { unreadCount, fetchNotifications } = useNotificationStore();
 
     const handleLogout = () => {
         logout();
@@ -17,18 +22,39 @@ const DashboardLayout = () => {
     };
 
     const navItems = [
-        { path: '/dashboard', label: 'Panel Principal', icon: LayoutDashboard, exact: true },
-        { path: '/dashboard/students', label: 'Estudiantes', icon: GraduationCap, roles: ['ADMIN'] },
-        { path: '/dashboard/teachers', label: 'Docentes', icon: Briefcase, roles: ['ADMIN'] },
-        { path: '/dashboard/users', label: 'Usuarios', icon: Users, roles: ['ADMIN'] },
-        { path: '/dashboard/courses', label: 'Cursos', icon: BookOpen, roles: ['ADMIN', 'TEACHER'] },
-        // { path: '/dashboard/groups', label: 'Grupos', icon: Layers, roles: ['ADMIN', 'TEACHER'] },
-        { path: '/dashboard/schools', label: 'Colegios', icon: School, roles: ['ADMIN'] },
-
-        { path: '/dashboard/agreements', label: 'Convenios', icon: FileSignature, roles: ['ADMIN'] },
-        { path: '/dashboard/enrollments', label: 'Matrículas', icon: ClipboardList, roles: ['ADMIN', 'TEACHER'] },  
-        { path: '/dashboard/grades', label: 'Calificaciones', icon: ClipboardCheck, roles: ['ADMIN', 'TEACHER'] },
+        { path: '/student/portal', label: 'Panel Principal', icon: LayoutDashboard, exact: true },
+        { path: '/student/notifications', label: 'Notificaciones', icon: Bell, exact: true, badge: unreadCount },
+        // { path: '/student/history', label: 'Historial Académico', icon: FileText, exact: true }, // Future implementation
     ];
+
+    useEffect(() => {
+        const checkNotifications = async () => {
+            await fetchNotifications();
+        };
+        checkNotifications();
+    }, []);
+
+    useEffect(() => {
+        if (unreadCount > 0) {
+            const hasSeenAlert = sessionStorage.getItem('hasSeenStudentNotificationAlert');
+            if (!hasSeenAlert) {
+                Swal.fire({
+                    title: '¡Tienes notificaciones nuevas!',
+                    text: `Tienes ${unreadCount} mensaje(s) sin leer.`,
+                    icon: 'info',
+                    confirmButtonText: 'Ver Notificaciones',
+                    showCancelButton: true,
+                    cancelButtonText: 'Más tarde',
+                    confirmButtonColor: '#004694'
+                }).then((result) => {
+                    sessionStorage.setItem('hasSeenStudentNotificationAlert', 'true');
+                    if (result.isConfirmed) {
+                        navigate('/student/notifications');
+                    }
+                });
+            }
+        }
+    }, [unreadCount]);
 
     return (
         <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -45,7 +71,7 @@ const DashboardLayout = () => {
                                 <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
                             </div>
                             <span className="font-bold text-lg text-white tracking-wide">
-                                Escuela Técnica
+                                Portal Estudiante
                             </span>
                         </div>
                     ) : (
@@ -63,9 +89,6 @@ const DashboardLayout = () => {
                 
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-transparent">
                     {navItems.map((item) => {
-                        // Check role access
-                        if (item.roles && !item.roles.some(r => user?.roles.includes(r))) return null;
-
                         const isActive = item.exact 
                             ? location.pathname === item.path
                             : location.pathname.startsWith(item.path);
@@ -74,10 +97,10 @@ const DashboardLayout = () => {
                             <NavLink
                                 key={item.path}
                                 to={item.path}
-                                className={({ isActive }) => `
+                                className={({ isActive: _isActive }) => `
                                     flex items-center gap-4 p-3 rounded-xl transition-all duration-200 group relative overflow-hidden font-medium
                                     ${isActive 
-                                        ? 'bg-[#BF0811] text-white shadow-md' 
+                                        ? 'bg-[#0066CC] text-white shadow-md border border-white/10' 
                                         : 'text-blue-100 hover:text-white hover:bg-white/10'
                                     }
                                 `}
@@ -86,6 +109,14 @@ const DashboardLayout = () => {
                                 <span className={`whitespace-nowrap transition-all duration-300 ${!isSidebarOpen && 'opacity-0 translate-x-10 hidden'}`}>
                                     {item.label}
                                 </span>
+                                {item.badge && item.badge > 0 && (
+                                    <span className={`
+                                        absolute right-3 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full transition-all duration-300
+                                        ${!isSidebarOpen && 'scale-0'}
+                                    `}>
+                                        {item.badge}
+                                    </span>
+                                )}
                             </NavLink>
                         );
                     })}
@@ -99,13 +130,13 @@ const DashboardLayout = () => {
                         {isSidebarOpen && (
                             <div className="overflow-hidden">
                                 <p className="text-sm font-bold text-white truncate">{user?.firstName}</p>
-                                <p className="text-xs text-blue-200 truncate font-medium">{user?.roles[0]}</p>
+                                <p className="text-xs text-blue-200 truncate font-medium">Estudiante</p>
                             </div>
                         )}
                     </div>
                      <button 
                         onClick={handleLogout} 
-                        className={`w-full flex items-center gap-3 p-3 text-white hover:bg-[#BF0811] rounded-xl transition-all duration-200 ${!isSidebarOpen && 'justify-center'}`}
+                        className={`w-full flex items-center gap-3 p-3 text-white hover:bg-red-600/80 rounded-xl transition-all duration-200 ${!isSidebarOpen && 'justify-center'}`}
                     >
                         <LogOut size={20} />
                         {isSidebarOpen && <span className="font-bold">Cerrar Sesión</span>}
@@ -118,22 +149,14 @@ const DashboardLayout = () => {
                 <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md px-8 py-4 flex items-center justify-between border-b border-gray-200 shadow-sm">
                     <div>
                         <h1 className="text-2xl font-bold text-[#004694] tracking-tight">
-                            {navItems.find(item => item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path))?.label || 'Panel de Control'}
+                            {navItems.find(item => item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path))?.label || 'Portal Estudiante'}
                         </h1>
-                        <p className="text-gray-500 text-sm">Bienvenido al Sistema de Gestión Académica</p>
+                        <p className="text-gray-500 text-sm">Bienvenido a tu Espacio Académico</p>
                     </div>
-                    
                     <div className="flex items-center gap-4">
                         <NotificationBell />
-                        
-                        <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-                            <div className="text-right hidden md:block">
-                                <p className="text-sm font-bold text-gray-800">{user?.firstName} {user?.paternalSurname}</p>
-                                <p className="text-xs text-blue-600 font-medium">{user?.roles[0]}</p>
-                            </div>
-                             <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 overflow-hidden flex items-center justify-center text-[#004694] font-bold">
-                                {user?.firstName?.charAt(0)}{user?.paternalSurname?.charAt(0)}
-                            </div>
+                         <div className="w-10 h-10 rounded-full bg-blue-100 border border-blue-200 overflow-hidden flex items-center justify-center text-[#004694] font-bold">
+                            {user?.firstName?.charAt(0)}{user?.paternalSurname?.charAt(0)}
                         </div>
                     </div>
                 </header>
@@ -146,5 +169,4 @@ const DashboardLayout = () => {
     );
 };
 
-export default DashboardLayout;
-
+export default StudentLayout;

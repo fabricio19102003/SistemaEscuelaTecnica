@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUserStore } from '../../store/user.store';
-import { Save, ArrowLeft, User as UserIcon, Lock, Shield } from 'lucide-react';
+import { Save, ArrowLeft, User as UserIcon, Lock, Shield, Wand2, Eye, EyeOff } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 
@@ -41,6 +41,8 @@ const UserFormPage: React.FC = () => {
         isActive: true
     });
 
+    const [showPassword, setShowPassword] = useState(false);
+
     useEffect(() => {
         fetchRoles();
         if (isEditing) {
@@ -68,6 +70,48 @@ const UserFormPage: React.FC = () => {
             }
         }
     }, [isEditing, users, id]);
+
+    const generateCredentials = () => {
+        if (!formData.firstName || !formData.paternalSurname) {
+             Swal.fire({
+                title: 'Faltan datos',
+                text: 'Por favor ingrese Nombre y Apellido Paterno para generar credenciales personalizadas.',
+                icon: 'warning',
+                background: '#1e293b',
+                color: '#fff',
+                confirmButtonColor: '#004694'
+            });
+            return;
+        }
+
+        const randomSuffix = Math.floor(100 + Math.random() * 900);
+        const cleanPaternal = formData.paternalSurname.replace(/\s+/g, '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const cleanFirstName = formData.firstName.replace(/\s+/g, '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        const generatedUsername = `${cleanFirstName.charAt(0)}${cleanPaternal}${randomSuffix}`;
+        const generatedPassword = Math.random().toString(36).slice(-8);
+
+        setFormData(prev => ({
+            ...prev,
+            username: generatedUsername,
+            password: generatedPassword
+        }));
+        
+         Swal.fire({
+            title: 'Credenciales Generadas',
+            html: `
+                <div class="text-left bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <p class="mb-2"><strong class="text-blue-900">Usuario:</strong> <span class="font-mono text-lg ml-2">${generatedUsername}</span></p>
+                    <p><strong class="text-blue-900">Contraseña:</strong> <span class="font-mono text-lg ml-2">${generatedPassword}</span></p>
+                </div>
+            `,
+            icon: 'success',
+            timer: 4000,
+            showConfirmButton: false,
+            background: '#ffffff',
+            color: '#1e293b'
+        });
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -184,9 +228,20 @@ const UserFormPage: React.FC = () => {
                 </div>
 
                 <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm">
-                     <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                        <Lock className="text-purple-600" size={24} />
-                        <h3 className="text-xl font-bold text-[#004694]">Credenciales de Acceso</h3>
+                     <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                            <Lock className="text-purple-600" size={24} />
+                            <h3 className="text-xl font-bold text-[#004694]">Credenciales de Acceso</h3>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={generateCredentials}
+                            className="flex items-center gap-2 text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-lg transition-all duration-200 font-bold text-sm border border-purple-100 hover:border-purple-200 shadow-sm"
+                            title="Generar usuario y contraseña automáticamente basado en el nombre"
+                        >
+                            <Wand2 size={16} />
+                            Generar Automáticamente
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -209,17 +264,72 @@ const UserFormPage: React.FC = () => {
                                 className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                              />
                         </div>
-                        <div className="md:col-span-2">
-                             <label className="block text-sm font-bold text-gray-700 mb-2">
-                                {isEditing ? 'Nueva Contraseña (dejar en blanco para mantener)' : 'Contraseña'}
-                             </label>
-                             <input 
-                                type="password"
-                                required={!isEditing}
-                                value={formData.password}
-                                onChange={e => setFormData({...formData, password: e.target.value})}
-                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                             />
+                        <div className="md:col-span-2 space-y-3">
+                             <div className="flex justify-between items-center">
+                                 <label className="block text-sm font-bold text-gray-700">
+                                    {isEditing ? 'Nueva Contraseña' : 'Contraseña'}
+                                 </label>
+                                 <button
+                                     type="button"
+                                     onClick={() => setShowPassword(!showPassword)}
+                                     className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                 >
+                                     {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                                     {showPassword ? 'Ocultar' : 'Mostrar'}
+                                 </button>
+                             </div>
+                             <div className="relative">
+                                 <input 
+                                    type={showPassword ? "text" : "password"}
+                                    required={!isEditing}
+                                    value={formData.password}
+                                    onChange={e => setFormData({...formData, password: e.target.value})}
+                                    placeholder={isEditing ? 'Dejar en blanco para mantener la actual' : 'Ingrese contraseña segura'}
+                                    className="w-full bg-white border border-gray-300 rounded-lg pl-4 pr-12 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono"
+                                 />
+                                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                     <Lock size={18} />
+                                 </div>
+                             </div>
+
+                             {/* Generated Password Display Area */}
+                             {formData.password && formData.password.length > 0 && (
+                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-2 animate-fade-in">
+                                     <p className="text-xs text-blue-600 font-bold uppercase mb-1">Contraseña Establecida:</p>
+                                     <div className="flex items-center justify-between">
+                                         <code className="text-lg font-mono font-bold text-blue-900 tracking-wider">
+                                             {formData.password}
+                                         </code>
+                                         <button 
+                                             type="button"
+                                             onClick={() => {
+                                                 navigator.clipboard.writeText(formData.password);
+                                                 const Toast = Swal.mixin({
+                                                     toast: true,
+                                                     position: 'top-end',
+                                                     showConfirmButton: false,
+                                                     timer: 2000,
+                                                     timerProgressBar: true
+                                                 });
+                                                 Toast.fire({
+                                                     icon: 'success',
+                                                     title: 'Contraseña copiada'
+                                                 });
+                                             }}
+                                             className="p-2 hover:bg-blue-100 rounded-lg text-blue-600 transition-colors"
+                                             title="Copiar contraseña"
+                                         >
+                                             <div className="flex items-center gap-1 text-xs font-bold">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                                COPIAR
+                                             </div>
+                                         </button>
+                                     </div>
+                                     <p className="text-xs text-blue-400 mt-2">
+                                        ⚠️ Asegúrese de copiar esta contraseña y entregarla al usuario. Por seguridad, no podrá visualizarla nuevamente después de guardar.
+                                     </p>
+                                 </div>
+                             )}
                         </div>
                     </div>
                 </div>

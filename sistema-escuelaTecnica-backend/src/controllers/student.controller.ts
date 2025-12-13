@@ -676,11 +676,14 @@ export const getStudentHistory = async (req: Request, res: Response) => {
                 levelName: level.name,
                 finalGrade: reportCard ? Number(reportCard.finalGrade) : null,
                 status: enrollment.status === 'COMPLETED' ? 'Aprobado' :
-                    enrollment.status === 'active' || enrollment.status === 'ACTIVE' ? 'Cursando' :
+                    enrollment.status === 'ACTIVE' ? 'Cursando' :
                         enrollment.status, // Translate statuses as needed
                 certificateUrl: enrollment.certificates[0]?.certificateFileUrl || null
             };
         });
+
+        // DEBUG LOG
+        console.log('Sending student history:', JSON.stringify(history, null, 2));
 
         res.json(history);
     } catch (error) {

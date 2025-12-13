@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     },
     universityName: {
         fontSize: 14,
-        fontWeight: 'bold',
+        fontFamily: 'Helvetica-Bold',
         textTransform: 'uppercase',
         marginBottom: 4
     },
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     },
     reportTitle: {
         fontSize: 16,
-        fontWeight: 'bold',
+        fontFamily: 'Helvetica-Bold',
         textAlign: 'center',
         marginVertical: 15,
         textTransform: 'uppercase',
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
         width: '20%',
         backgroundColor: '#f0f0f0',
         padding: 4,
-        fontWeight: 'bold',
+        fontFamily: 'Helvetica-Bold',
         borderRightWidth: 1,
         borderRightColor: '#000000',
         fontSize: 8
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     },
     tableHeaderCell: {
         padding: 4,
-        fontWeight: 'bold',
+        fontFamily: 'Helvetica-Bold',
         fontSize: 7,
         textAlign: 'center',
         borderRightWidth: 1,
@@ -123,6 +123,14 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         borderRightWidth: 1,
         borderRightColor: '#000000'
+    },
+    tableCellBold: {
+        padding: 4,
+        fontSize: 7,
+        textAlign: 'center',
+        borderRightWidth: 1,
+        borderRightColor: '#000000',
+        fontFamily: 'Helvetica-Bold'
     },
 
     // Column Widths
@@ -154,7 +162,7 @@ const styles = StyleSheet.create({
     signatureText: {
         fontSize: 8,
         textAlign: 'center',
-        fontWeight: 'bold'
+        fontFamily: 'Helvetica-Bold'
     },
     // Footer with audit info
     footer: {
@@ -203,14 +211,14 @@ export const AcademicHistoryPDF: React.FC<AcademicHistoryPDFProps> = ({ student,
                     <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>ESTUDIANTE:</Text>
                         <Text style={[styles.infoValue, { width: '80%' }]}>
-                            {student.user.firstName} {student.user.paternalSurname} {student.user.maternalSurname || ''}
+                            {String(student.user.firstName || '')} {String(student.user.paternalSurname || '')} {String(student.user.maternalSurname || '')}
                         </Text>
                     </View>
                     <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>CÓDIGO:</Text>
-                        <Text style={styles.infoValue}>{student.registrationCode}</Text>
+                        <Text style={styles.infoValue}>{String(student.registrationCode || '-')}</Text>
                         <Text style={styles.infoLabel}>C.I.:</Text>
-                        <Text style={[styles.infoValue, { borderRightWidth: 0 }]}>{student.documentNumber}</Text>
+                        <Text style={[styles.infoValue, { borderRightWidth: 0 }]}>{String(student.documentNumber || '-')}</Text>
                     </View>
                     <View style={styles.infoRowLast}>
                         <Text style={styles.infoLabel}>PROGRAMA:</Text>
@@ -234,16 +242,16 @@ export const AcademicHistoryPDF: React.FC<AcademicHistoryPDFProps> = ({ student,
 
                     {history.map((record, index) => (
                         <View key={record.id} style={[styles.tableRow, index === history.length - 1 ? { borderBottomWidth: 0 } : {}]}>
-                            <Text style={[styles.tableCell, styles.colGestion]}>{String(record.year)}</Text>
-                            <Text style={[styles.tableCell, styles.colPeriodo]}>{String(record.period)}</Text>
-                            <Text style={[styles.tableCell, styles.colCodigo]}>{record.courseCode || '-'}</Text>
-                            <Text style={[styles.tableCell, styles.colAsignatura]}>{record.courseName}</Text>
-                            <Text style={[styles.tableCell, styles.colNivel]}>{record.levelName}</Text>
-                            <Text style={[styles.tableCell, styles.colNota, { fontWeight: 'bold' }]}>
-                                {record.finalGrade !== null ? Number(record.finalGrade).toFixed(2) : '-'}
+                            <Text style={[styles.tableCell, styles.colGestion]}>{String(record.year || '-')}</Text>
+                            <Text style={[styles.tableCell, styles.colPeriodo]}>{String(record.period || '-')}</Text>
+                            <Text style={[styles.tableCell, styles.colCodigo]}>{record.courseCode ? String(record.courseCode) : '-'}</Text>
+                            <Text style={[styles.tableCell, styles.colAsignatura]}>{record.courseName ? String(record.courseName) : '-'}</Text>
+                            <Text style={[styles.tableCell, styles.colNivel]}>{record.levelName ? String(record.levelName) : '-'}</Text>
+                            <Text style={[styles.tableCellBold, styles.colNota]}>
+                                {record.finalGrade !== null && record.finalGrade !== undefined ? Number(record.finalGrade).toFixed(2) : '-'}
                             </Text>
                             <Text style={[styles.tableCell, styles.colEstado]}>
-                                {record.status === 'ACTIVE' ? 'CURSANDO' : record.status.toUpperCase()}
+                                {record.status ? (record.status === 'ACTIVE' ? 'CURSANDO' : String(record.status).toUpperCase()) : '-'}
                             </Text>
                         </View>
                     ))}
@@ -271,7 +279,7 @@ export const AcademicHistoryPDF: React.FC<AcademicHistoryPDFProps> = ({ student,
 
                 {/* Footer */}
                 <View style={styles.footer}>
-                     <Text>Generado por: {userWhoGenerated} | Fecha: {currentDate} {currentTime} | IP: {clientIp} | El documento se genero desde el sistema de informacion Escuela Técnica de la U.A.P.</Text>
+                     <Text>Generado por: {String(userWhoGenerated || 'Usuario Sistema')} | Fecha: {currentDate} {currentTime} | IP: {String(clientIp || 'Unknown')} | El documento se genero desde el sistema de informacion Escuela Técnica de la U.A.P.</Text>
                 </View>
             </Page>
         </Document>

@@ -43,6 +43,7 @@ model User {
   cashFlowsCreated        CashFlow[]
   notificationEmailLogs   NotificationEmailLog[]
   enrollmentsCreated      Enrollment[]              @relation("EnrollmentCreator")
+  notifications           Notification[]            // New relation for in-app notifications
 
   @@index([email])
   @@index([isActive])
@@ -664,6 +665,22 @@ model NotificationEmailLog {
   @@index([emailType])
   @@index([sentAt])
   @@map("notification_email_logs")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  userId    Int      @map("user_id") @db.UnsignedInt
+  title     String   @db.VarChar(150)
+  message   String   @db.Text
+  type      String   @default("INFO") // INFO, WARNING, SUCCESS, ERROR
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
 }
 
 // ============================================

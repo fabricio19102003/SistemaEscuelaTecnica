@@ -4,10 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api/axios';
 import { useAuthStore } from '../../store/auth.store';
+import logoUap from '../../assets/images/logo_uap_official.png';
+import { User, Lock, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
-    identifier: z.string().min(1, 'Email or Username is required'),
-    password: z.string().min(1, 'Password is required'),
+    identifier: z.string().min(1, 'Usuario o correo requerido'),
+    password: z.string().min(1, 'Contraseña requerida'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -28,78 +30,122 @@ const LoginPage = () => {
         } catch (error: any) {
             console.error(error);
             setError('root', { 
-                message: error.response?.data?.message || 'Login failed. Please check your credentials.' 
+                message: error.response?.data?.message || 'Error de autenticación. Verifique sus credenciales.' 
             });
         }
     };
 
     return (
-        <>
-            <h2 className="text-3xl font-bold text-center mb-8 text-white tracking-tight">Iniciar Sesión</h2>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-300">Usuario o Correo</label>
-                    <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg className="h-5 w-5 text-gray-400 group-focus-within:text-blue-400 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                            </svg>
-                        </div>
-                        <input
-                            type="text"
-                            {...register('identifier')}
-                            className="block w-full pl-10 pr-3 py-3 border border-gray-600/50 rounded-xl leading-5 bg-white/5 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 sm:text-sm transition-all duration-200 backdrop-blur-sm"
-                            placeholder="Usuario o correo electrónico"
+        <div className="min-h-screen w-full flex items-center justify-center bg-[#004694] relative overflow-hidden font-sans">
+            {/* Background Decorative Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[80%] rounded-full bg-blue-500/20 blur-[120px]" />
+                <div className="absolute top-[40%] -right-[10%] w-[60%] h-[80%] rounded-full bg-blue-800/20 blur-[120px]" />
+                <div className="absolute bottom-[10%] left-[20%] w-[30%] h-[50%] rounded-full bg-red-600/10 blur-[100px]" />
+            </div>
+
+            {/* Main Container */}
+            <div className="w-full max-w-md p-6 relative z-10 animate-in fade-in zoom-in duration-500">
+                
+                {/* Logo Section */}
+                <div className="flex flex-col items-center mb-8">
+                    <div className="bg-white/10 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-white/20 mb-6 transform hover:scale-105 transition-transform duration-300">
+                        <img 
+                            src={logoUap} 
+                            alt="Logo UAP" 
+                            className="w-24 h-24 object-contain drop-shadow-lg" 
                         />
                     </div>
-                    {errors.identifier && <p className="text-red-400 text-xs mt-1 font-medium ml-1">{errors.identifier.message}</p>}
+                    <h1 className="text-3xl font-extrabold text-white text-center tracking-tight drop-shadow-md">
+                        Sistema <span className="text-blue-200">Escuela Técnica</span>
+                    </h1>
+                    <p className="text-blue-200 mt-2 text-sm font-medium tracking-wide uppercase opacity-90">
+                        Universidad Amazónica de Pando
+                    </p>
                 </div>
 
-                <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-300">Contraseña</label>
-                    <div className="relative group">
-                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg className="h-5 w-5 text-gray-400 group-focus-within:text-blue-400 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                            </svg>
+                {/* Login Card */}
+                <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
+                    <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                        <span className="w-1 h-6 bg-red-600 rounded-full block shadow-[0_0_10px_rgba(220,38,38,0.5)]"></span>
+                        Iniciar Sesión
+                    </h2>
+
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-blue-100 uppercase tracking-wider ml-1">Usuario</label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <User className="h-5 w-5 text-blue-300 group-focus-within:text-white transition-colors" />
+                                </div>
+                                <input
+                                    type="text"
+                                    {...register('identifier')}
+                                    className="block w-full pl-11 pr-4 py-3.5 bg-blue-950/30 border border-blue-400/30 rounded-xl text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 focus:bg-blue-950/50 transition-all duration-200 text-sm font-medium backdrop-blur-sm"
+                                    placeholder="Ingrese su usuario o correo"
+                                />
+                            </div>
+                            {errors.identifier && (
+                                <p className="text-red-300 text-xs mt-1 flex items-center gap-1 ml-1 animate-in slide-in-from-left-2 duration-200">
+                                    <AlertCircle size={12} /> {errors.identifier.message}
+                                </p>
+                            )}
                         </div>
-                        <input
-                            type="password"
-                            {...register('password')}
-                            className="block w-full pl-10 pr-3 py-3 border border-gray-600/50 rounded-xl leading-5 bg-white/5 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 sm:text-sm transition-all duration-200 backdrop-blur-sm"
-                            placeholder="••••••••"
-                        />
-                    </div>
-                    {errors.password && <p className="text-red-400 text-xs mt-1 font-medium ml-1">{errors.password.message}</p>}
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-blue-100 uppercase tracking-wider ml-1">Contraseña</label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-blue-300 group-focus-within:text-white transition-colors" />
+                                </div>
+                                <input
+                                    type="password"
+                                    {...register('password')}
+                                    className="block w-full pl-11 pr-4 py-3.5 bg-blue-950/30 border border-blue-400/30 rounded-xl text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 focus:bg-blue-950/50 transition-all duration-200 text-sm font-medium backdrop-blur-sm"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+                            {errors.password && (
+                                <p className="text-red-300 text-xs mt-1 flex items-center gap-1 ml-1 animate-in slide-in-from-left-2 duration-200">
+                                    <AlertCircle size={12} /> {errors.password.message}
+                                </p>
+                            )}
+                        </div>
+
+                        {errors.root && (
+                            <div className="p-4 bg-red-500/20 border border-red-500/30 text-red-100 rounded-xl text-sm flex items-start gap-3 animate-in shake duration-300">
+                                <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+                                <span className="font-medium">{errors.root.message}</span>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="w-full flex items-center justify-center gap-2 py-4 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-900/50 text-sm font-bold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#004694] focus:ring-red-500 disabled:opacity-70 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] mt-6"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="animate-spin h-5 w-5" />
+                                    <span>Verificando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>Ingresar al Sistema</span>
+                                    <ArrowRight className="h-5 w-5" />
+                                </>
+                            )}
+                        </button>
+                    </form>
                 </div>
 
-                {errors.root && (
-                    <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-200 rounded-lg text-sm flex items-center">
-                        <svg className="h-5 w-5 text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {errors.root.message}
-                    </div>
-                )}
-
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                    {isSubmitting ? (
-                        <span className="flex items-center">
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Iniciando sesión...
-                        </span>
-                    ) : 'Ingresar al Sistema'}
-                </button>
-            </form>
-        </>
+                <div className="mt-8 text-center">
+                    <p className="text-blue-300/60 text-xs font-medium">
+                        © {new Date().getFullYear()} Universidad Amazónica de Pando v1.0
+                    </p>
+                </div>
+            </div>
+        </div>
     );
 };
 

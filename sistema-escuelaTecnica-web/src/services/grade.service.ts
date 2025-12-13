@@ -17,6 +17,7 @@ export interface EnrollmentWithGrades {
         registrationCode?: string;
         documentNumber?: string;
         user: {
+            id: number;
             firstName: string;
             paternalSurname: string;
             maternalSurname: string;
