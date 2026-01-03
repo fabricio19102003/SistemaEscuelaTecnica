@@ -7,7 +7,6 @@ export const getFinancialStatsByCourse = async (req: Request, res: Response) => 
         // Path: Course -> Level -> Group -> Enrollment -> Invoice -> PaymentRecord
 
         // 1. Get all courses with their levels and groups
-        // 1. Get all courses with their levels and groups
         const courses = await prisma.course.findMany({
             where: { isActive: true },
             include: {

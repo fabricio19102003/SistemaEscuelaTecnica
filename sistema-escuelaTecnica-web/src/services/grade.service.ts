@@ -61,3 +61,8 @@ export const getGroupReport = async (groupId: number) => {
     const response = await axios.get(`/grades/report/group/${groupId}`);
     return response.data;
 };
+
+export const getSchoolStatistics = async () => {
+    const response = await axios.get<{ schoolId: number; name: string; count: number }[]>('/grades/stats/schools');
+    return response.data;
+};

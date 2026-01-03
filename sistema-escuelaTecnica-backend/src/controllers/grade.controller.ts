@@ -9,7 +9,7 @@ export const getGradesByGroup = async (req: Request, res: Response) => {
         const enrollments = await prisma.enrollment.findMany({
             where: {
                 groupId: Number(groupId),
-                status: 'ACTIVE' // Only active students
+                status: { in: ['ACTIVE', 'COMPLETED'] } // Active and Completed students
             },
             include: {
                 student: {
@@ -45,7 +45,7 @@ export const getGradesByCourse = async (req: Request, res: Response) => {
                         courseId: Number(courseId)
                     }
                 },
-                status: 'ACTIVE'
+                status: { in: ['ACTIVE', 'COMPLETED'] }
             },
             include: {
                 student: {
@@ -103,7 +103,7 @@ export const getGroupReportData = async (req: Request, res: Response) => {
         const enrollments = await prisma.enrollment.findMany({
             where: {
                 groupId: Number(groupId),
-                status: 'ACTIVE'
+                status: { in: ['ACTIVE', 'COMPLETED'] }
             },
             include: {
                 student: {
@@ -138,7 +138,7 @@ export const getAllGrades = async (req: Request, res: Response) => {
     try {
         const enrollments = await prisma.enrollment.findMany({
             where: {
-                status: 'ACTIVE'
+                status: { in: ['ACTIVE', 'COMPLETED'] }
             },
             include: {
                 student: {
@@ -187,6 +187,35 @@ export const saveGrades = async (req: Request, res: Response) => {
         if (!enrollmentId || !Array.isArray(grades)) {
             console.error('Invalid data: enrollmentId or grades array missing');
             return res.status(400).json({ message: 'Datos inválidos' });
+        }
+
+        // Check if grade entry is enabled (Admin global switch)
+        const userRoles = (req as any).user?.roles || [];
+        const isAdmin = userRoles.includes('ADMIN');
+
+        if (!isAdmin) {
+            const setting = await prisma.systemSetting.findUnique({
+                where: { key: 'GRADES_OPEN' }
+            });
+            const areGradesOpen = setting ? setting.value === 'true' : true; // Default open if not set
+
+            if (!areGradesOpen) {
+                return res.status(403).json({ message: 'El registro de notas está deshabilitado por administración.' });
+            }
+
+            // NEW: Check if specific GROUP is finalized (GRADES_SUBMITTED or COMPLETED)
+            const enrollment = await prisma.enrollment.findUnique({
+                where: { id: Number(enrollmentId) },
+                include: { group: true }
+            });
+
+            if (!enrollment) {
+                return res.status(404).json({ message: 'Inscripción no encontrada' });
+            }
+
+            if (enrollment.group.status === 'GRADES_SUBMITTED' || enrollment.group.status === 'COMPLETED') {
+                return res.status(403).json({ message: 'El curso ha sido finalizado. No se permiten más modificaciones.' });
+            }
         }
 
         // Find teacher associated with user to correctly link recordedBy
@@ -293,7 +322,8 @@ export const getReportCardData = async (req: Request, res: Response) => {
                             include: {
                                 course: {
                                     include: {
-                                        schedules: true
+                                        schedules: true,
+                                        nextCourses: true // Include next courses to determine "Pass to"
                                     }
                                 }
                             }
@@ -301,6 +331,7 @@ export const getReportCardData = async (req: Request, res: Response) => {
                     }
                 },
                 grades: true,
+                attendances: true, // Include attendance to count absences
                 reportCards: {
                     orderBy: { createdAt: 'desc' },
                     take: 1
@@ -354,6 +385,14 @@ export const getReportCardData = async (req: Request, res: Response) => {
         const courseName = enrollment.group.level.course.name.toUpperCase();
         const levelName = enrollment.group.level.name.toUpperCase();
 
+        // Determine "Pass to" course
+        const nextCourses = enrollment.group.level.course.nextCourses;
+        let nextCourseName = 'APROBADO';
+        if (nextCourses && nextCourses.length > 0 && nextCourses[0]) {
+            // Usually there is only one next course in linear progression
+            nextCourseName = nextCourses[0].name.toUpperCase();
+        }
+
         const responseData = {
             ...enrollment,
             studentName,
@@ -363,9 +402,11 @@ export const getReportCardData = async (req: Request, res: Response) => {
             period,
             schedule: scheduleString || 'POR DEFINIR',
             groupName: enrollment.group.name,
+            absences: enrollment.attendances.filter(a => a.status === 'ABSENT').length, // Count actual absences
             finalScore: average, // Mapped to finalScore as expected by PDF
             calculatedAverage: average,
-            passed: average >= 51
+            passed: average >= 51,
+            nextCourse: nextCourseName // Return the calculated next course name
         };
 
         res.json(responseData);
@@ -373,5 +414,57 @@ export const getReportCardData = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error fetching report card data:', error);
         res.status(500).json({ message: 'Error al obtener datos del boletín' });
+    }
+};
+
+// NEW: Get School Statistics (Top Schools by student count)
+export const getSchoolStatistics = async (req: Request, res: Response) => {
+    try {
+        // 1. Group students by schoolId to count them
+        const schoolCounts = await prisma.student.groupBy({
+            by: ['schoolId'],
+            _count: {
+                id: true
+            },
+            orderBy: {
+                _count: {
+                    id: 'desc'
+                }
+            },
+            take: 10 // Top 10 schools
+        });
+
+        // 2. Fetch school details for the mapped IDs
+        const schoolIds = schoolCounts
+            .map(s => s.schoolId)
+            .filter((id): id is number => id !== null); // Filter out null schoolIds
+
+        const schools = await prisma.school.findMany({
+            where: {
+                id: { in: schoolIds }
+            },
+            select: {
+                id: true,
+                name: true
+            }
+        });
+
+        // 3. Map counts to names
+        const result = schoolCounts
+            .filter(s => s.schoolId !== null)
+            .map(countItem => {
+                const schoolDef = schools.find(s => s.id === countItem.schoolId);
+                return {
+                    schoolId: countItem.schoolId,
+                    name: schoolDef?.name || 'Desconocido',
+                    count: countItem._count.id
+                };
+            });
+
+        res.json(result);
+
+    } catch (error) {
+        console.error('Error fetching school statistics:', error);
+        res.status(500).json({ message: 'Error al obtener estadísticas de colegios' });
     }
 };

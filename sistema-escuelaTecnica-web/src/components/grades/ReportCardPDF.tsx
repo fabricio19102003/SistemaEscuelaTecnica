@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import logoUap from '../../assets/images/logo_uap.png';
-import logoCentro from '../../assets/images/logo_centro.png';
+
+
 
 const styles = StyleSheet.create({
     page: {
@@ -134,12 +134,7 @@ const styles = StyleSheet.create({
         border: '1pt solid #000',
         alignItems: 'center',
     },
-    statusText: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        marginBottom: 5,
-        textAlign: 'center',
-    },
+
     passToText: {
         fontSize: 11,
         textAlign: 'center',
@@ -176,21 +171,38 @@ const styles = StyleSheet.create({
 
 interface ReportCardPDFProps {
     data: any;
+    period: string;
+    courseName?: string;
+    teacherName?: string;
+    studentName?: string;
+    scheduleTime?: string;
+    nextCourse?: string;
     userWhoGenerated?: string;
     clientIp?: string;
 }
 
-const ReportCardPDF: React.FC<ReportCardPDFProps> = ({ data, userWhoGenerated, clientIp }) => {
+export const ReportCardPDF: React.FC<ReportCardPDFProps> = ({ 
+    data, 
+    period, 
+    courseName, 
+    teacherName, 
+    studentName, 
+    scheduleTime,
+    nextCourse,
+    userWhoGenerated, 
+    clientIp
+}) => {
     const currentDate = new Date().toLocaleDateString('es-ES');
     const currentTime = new Date().toLocaleTimeString('es-ES');
+    const logoUapUrl = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}/images/logo_uap.png` : '';
 
-    // Extract data for display
-    const studentName = data.studentName || 'ESTUDIANTE';
-    const courseName = data.courseName || 'CURSO';
-    const levelName = data.levelName || '';
-    const teacherName = data.teacherName || '';
-    const period = data.period || '';
-    const schedule = data.schedule || '';
+    // Extract data for display - Use props if available, otherwise fallback to data object
+    const displayStudentName = studentName || data.studentName || 'ESTUDIANTE';
+    const displayCourseName = courseName || data.courseName || 'CURSO';
+    const displayLevelName = data.levelName || '';
+    const displayTeacherName = teacherName || data.teacherName || '';
+    const displayPeriod = period || data.period || '';
+    const displaySchedule = scheduleTime || data.schedule || '';
 
     // Calculate or extract calculated items
     const competencies = ['SPEAKING', 'LISTENING', 'READING', 'WRITING', 'VOCABULARY', 'GRAMMAR'];
@@ -213,14 +225,11 @@ const ReportCardPDF: React.FC<ReportCardPDFProps> = ({ data, userWhoGenerated, c
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.logoContainer}>
-                        <Image src={logoUap} style={styles.logo} />
+                        <Image src={logoUapUrl} style={styles.logo} />
                     </View>
                     <View style={styles.headerCenter}>
                         <Text style={styles.universityName}>UNIVERSIDAD AMAZÓNICA DE PANDO</Text>
                         <Text style={styles.departmentName}>CENTRO DE IDIOMAS Y RECURSOS DIDÁCTICOS</Text>
-                    </View>
-                    <View style={styles.logoContainer}>
-                        <Image src={logoCentro} style={styles.logo} />
                     </View>
                 </View>
 
@@ -228,7 +237,7 @@ const ReportCardPDF: React.FC<ReportCardPDFProps> = ({ data, userWhoGenerated, c
                 <View style={styles.studentInfo}>
                     <View style={styles.infoRow}>
                         <View style={[styles.infoCell, { width: '60%' }]}>
-                            <Text><Text style={styles.infoLabel}>Student: </Text>{studentName}</Text>
+                            <Text><Text style={styles.infoLabel}>Student: </Text>{displayStudentName}</Text>
                         </View>
                         <View style={[styles.infoCell, { width: '40%', borderRight: 'none' }]}>
                             <Text><Text style={styles.infoLabel}>Date: </Text>{currentDate}</Text>
@@ -236,18 +245,18 @@ const ReportCardPDF: React.FC<ReportCardPDFProps> = ({ data, userWhoGenerated, c
                     </View>
                     <View style={styles.infoRow}>
                         <View style={[styles.infoCell, { width: '50%' }]}>
-                            <Text><Text style={styles.infoLabel}>Course: </Text>{courseName} - {levelName}</Text>
+                            <Text><Text style={styles.infoLabel}>Course: </Text>{displayCourseName} - {displayLevelName}</Text>
                         </View>
                         <View style={[styles.infoCell, { width: '50%', borderRight: 'none' }]}>
-                            <Text><Text style={styles.infoLabel}>Period: </Text>{period}</Text>
+                            <Text><Text style={styles.infoLabel}>Period: </Text>{displayPeriod}</Text>
                         </View>
                     </View>
                     <View style={[styles.infoRow, { borderBottom: 'none' }]}>
                         <View style={[styles.infoCell, { width: '60%', borderRight: 'none' }]}>
-                            <Text><Text style={styles.infoLabel}>Teacher: </Text>{teacherName}</Text>
+                            <Text><Text style={styles.infoLabel}>Teacher: </Text>{displayTeacherName}</Text>
                         </View>
                          <View style={[styles.infoCell, { width: '40%', borderRight: 'none' }]}>
-                            <Text><Text style={styles.infoLabel}>Schedule: </Text>{schedule}</Text>
+                            <Text><Text style={styles.infoLabel}>Schedule: </Text>{displaySchedule}</Text>
                         </View>
                     </View>
                 </View>
@@ -292,11 +301,11 @@ const ReportCardPDF: React.FC<ReportCardPDFProps> = ({ data, userWhoGenerated, c
                         <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 0, color: passed ? '#000' : '#D32F2F', textAlign: 'center' }}>
                             {passed ? '' : 'Repeat: You failed the course'}
                         </Text>
-                        <Text style={{ fontSize: 11, textAlign: 'center' }}>
-                            Pass to: <Text style={{ color: passed ? '#388E3C' : '#D32F2F' }}>
-                                {passed ? 'PROXIMO NIVEL' : 'REPROBADO'}
+                            <Text style={{ fontSize: 11, textAlign: 'center' }}>
+                                Pass to: <Text style={{ color: passed ? '#388E3C' : '#D32F2F' }}>
+                                    {passed ? (nextCourse || 'FIN DE PROGRAMA') : 'REPROBADO'}
+                                </Text>
                             </Text>
-                        </Text>
                     </View>
                 </View>
 

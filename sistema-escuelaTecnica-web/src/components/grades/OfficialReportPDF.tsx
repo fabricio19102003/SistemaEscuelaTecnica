@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import logoUap from '../../assets/images/logo_uap_official.png';
+
 
 // Import fonts if necessary, defaulting to standard Helvetica for reliability
 
@@ -195,6 +195,7 @@ const OfficialReportPDF: React.FC<OfficialReportPDFProps> = ({ data, userWhoGene
     const { group, enrollments } = data;
     const currentDate = new Date().toLocaleDateString('es-ES');
     const currentTime = new Date().toLocaleTimeString('es-ES');
+    const logoUapUrl = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}/images/logo_uap.png` : '';
     
     // Format data
     // Format data with defensive checks
@@ -257,7 +258,7 @@ const OfficialReportPDF: React.FC<OfficialReportPDFProps> = ({ data, userWhoGene
                 {/* ENCABEZADO INSTITUCIONAL */}
                 <View style={styles.headerContainer}>
                     <View style={styles.logoContainer}>
-                        <Image src={logoUap} style={styles.logo} />
+                        <Image src={logoUapUrl} style={styles.logo} />
                     </View>
                     <View style={styles.headerTextContainer}>
                         <Text style={styles.universityName}>UNIVERSIDAD AMAZÓNICA DE PANDO</Text>

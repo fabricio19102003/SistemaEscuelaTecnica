@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCourseStore } from '../../store/course.store';
 import { useGradeStore } from '../../store/grade.store';
-import { Download, ArrowLeft, FileText } from 'lucide-react';
+import { Download, ArrowLeft, FileText, Eye } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { pdf } from '@react-pdf/renderer';
 import ReportCardPDF from '../../components/grades/ReportCardPDF';
@@ -15,6 +15,7 @@ const GradeReportsPage = () => {
     
     const [selectedCourseId, setSelectedCourseId] = useState('');
     const [generatingPdfId, setGeneratingPdfId] = useState<number | null>(null);
+    const [previewingPdfId, setPreviewingPdfId] = useState<number | null>(null);
 
     useEffect(() => {
         fetchCourses();
@@ -34,7 +35,19 @@ const GradeReportsPage = () => {
             setGeneratingPdfId(studentId);
             const { data } = await axios.get(`/grades/report-card/${enrollment.id}`);
             
-            const blob = await pdf(<ReportCardPDF data={data} />).toBlob();
+            const blob = await pdf(
+                <ReportCardPDF 
+                    data={data} 
+                    period={data.period}
+                    courseName={data.courseName}
+                    teacherName={data.teacherName}
+                    studentName={data.studentName}
+                    scheduleTime={data.schedule}
+                    nextCourse={data.nextCourse}
+                    userWhoGenerated="ADMINISTRACION" // Default or fetch real user
+                    clientIp="N/A"
+                />
+            ).toBlob();
             
             const u = enrollment.student.user;
             const fullName = `${u.firstName}_${u.paternalSurname}`.toUpperCase();
@@ -54,6 +67,42 @@ const GradeReportsPage = () => {
             Swal.fire('Error', 'No se pudo generar el boletín', 'error');
         } finally {
             setGeneratingPdfId(null);
+        }
+    };
+
+    const handlePreviewReport = async (studentId: number) => {
+        const enrollment = enrollments.find(e => e.student.id === studentId);
+        if (!enrollment) return;
+
+        try {
+            setPreviewingPdfId(studentId);
+            const { data } = await axios.get(`/grades/report-card/${enrollment.id}`);
+            
+            const blob = await pdf(
+                <ReportCardPDF 
+                    data={data} 
+                    period={data.period}
+                    courseName={data.courseName}
+                    teacherName={data.teacherName}
+                    studentName={data.studentName}
+                    scheduleTime={data.schedule}
+                    nextCourse={data.nextCourse}
+                    userWhoGenerated="ADMINISTRACION"
+                    clientIp="N/A"
+                />
+            ).toBlob();
+            
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            
+            // Cleanup
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+        } catch (error) {
+            console.error('PDF Preview Error:', error);
+            Swal.fire('Error', 'No se pudo previsualizar el boletín', 'error');
+        } finally {
+            setPreviewingPdfId(null);
         }
     };
 
@@ -116,7 +165,22 @@ const GradeReportsPage = () => {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handlePreviewReport(enrollment.student.id)}
+                                                    disabled={previewingPdfId === enrollment.student.id}
+                                                    className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg transition-colors text-xs font-bold shadow-sm disabled:opacity-50 border border-gray-200"
+                                                    title="Previsualizar"
+                                                >
+                                                    {previewingPdfId === enrollment.student.id ? (
+                                                        <span className="animate-pulse">...</span>
+                                                    ) : (
+                                                        <>
+                                                            <Eye size={14} />
+                                                            Ver
+                                                        </>
+                                                    )}
+                                                </button>
                                                 <button
                                                     onClick={() => handleDownloadReport(enrollment.student.id)}
                                                     disabled={generatingPdfId === enrollment.student.id}

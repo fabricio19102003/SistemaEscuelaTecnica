@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import logoUap from '../../assets/images/logo_uap_official.png';
+
 
 const styles = StyleSheet.create({
     page: {
@@ -173,6 +173,7 @@ interface EnrollmentListPDFProps {
 const EnrollmentListPDF: React.FC<EnrollmentListPDFProps> = ({ data, filterInfo, userWhoGenerated, clientIp }) => {
     const currentDate = new Date().toLocaleDateString('es-ES');
     const currentTime = new Date().toLocaleTimeString('es-ES');
+    const logoUapUrl = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}/images/logo_uap.png` : '';
 
     return (
         <Document>
@@ -181,7 +182,7 @@ const EnrollmentListPDF: React.FC<EnrollmentListPDFProps> = ({ data, filterInfo,
                 {/* HEADERS */}
                 <View style={styles.headerContainer}>
                     <View style={styles.logoContainer}>
-                        <Image src={logoUap} style={styles.logo} />
+                        <Image src={logoUapUrl} style={styles.logo} />
                     </View>
                     <View style={styles.headerTextContainer}>
                         <Text style={styles.universityName}>UNIVERSIDAD AMAZÓNICA DE PANDO</Text>

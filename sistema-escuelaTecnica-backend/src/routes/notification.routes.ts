@@ -6,8 +6,8 @@ import {
     getMyNotifications,
     markAsRead,
     markAllAsRead
-} from '../controllers/notification.controller';
-import { authenticateJWT as authenticateToken, authorizeRoles as requireRole } from '../middleware/auth.middleware';
+} from '../controllers/notification.controller.js';
+import { authenticateJWT as authenticateToken, authorizeRoles as requireRole } from '../middleware/auth.middleware.js';
 
 const router = Router();
 

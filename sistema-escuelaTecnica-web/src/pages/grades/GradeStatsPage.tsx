@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCourseStore } from '../../store/course.store';
 import { useGradeStore } from '../../store/grade.store';
 import { getRevenueByCourse, type RevenueByCourse } from '../../services/stats.service';
+import { getSchoolStatistics } from '../../services/grade.service';
 import { ArrowLeft, PieChart, BarChart as BarChartIcon, Download, Search, School, AlertTriangle, TrendingDown, DollarSign, Award, Star, Send } from 'lucide-react';
 import { 
     BarChart, 
@@ -30,7 +31,10 @@ const COMPETENCIES = [
     { id: 'GRAMMAR', label: 'Grammar', color: '#f472b6' }
 ];
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+const COLORS = [
+    '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8',
+    '#F44336', '#9C27B0', '#3F51B5', '#009688', '#CDDC39'
+];
 
 const GradeStatsPage = () => {
     const navigate = useNavigate();
@@ -41,6 +45,7 @@ const GradeStatsPage = () => {
     const [selectedCourseId, setSelectedCourseId] = useState('');
     const [generatingPdf, setGeneratingPdf] = useState(false);
     const [financialStats, setFinancialStats] = useState<RevenueByCourse[]>([]);
+    const [schoolStats, setSchoolStats] = useState<{schoolId: number, name: string, count: number}[]>([]);
     
     // Notification Modal State
     const [showNotifyModal, setShowNotifyModal] = useState(false);
@@ -50,6 +55,7 @@ const GradeStatsPage = () => {
     useEffect(() => {
         fetchCourses();
         getRevenueByCourse().then(setFinancialStats).catch(console.error);
+        getSchoolStatistics().then(setSchoolStats).catch(console.error);
     }, [fetchCourses]);
 
     useEffect(() => {
@@ -374,6 +380,48 @@ const GradeStatsPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* School Stats Section */}
+                    {schoolStats.length > 0 && (
+                        <div className="bg-white p-6 rounded-xl border border-blue-200 shadow-sm">
+                            <h3 className="text-lg font-bold text-blue-700 mb-6 flex items-center gap-2">
+                                <School size={20} />
+                                Procedencia Escolar (Top 10 Colegios)
+                            </h3>
+                            <div className="h-[450px] w-full flex justify-center items-center">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RechartsPieChart>
+                                        <Pie
+                                            data={schoolStats}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius="30%"
+                                            paddingAngle={5}
+                                            label={({ name, percent }) => `${name} ${(percent ? (percent * 100).toFixed(0) : 0)}%`}
+                                            outerRadius="60%"
+                                            fill="#3b82f6"
+                                            dataKey="count"
+                                        >
+                                            {schoolStats.map((_entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip 
+                                            formatter={(value) => [`${value} estudiantes`, 'Cantidad']}
+                                            contentStyle={{ 
+                                                backgroundColor: '#fff', 
+                                                borderColor: '#e5e7eb', 
+                                                color: '#111827',
+                                                borderRadius: '0.5rem'
+                                            }}
+                                            itemStyle={{ color: '#000', fontWeight: 'bold' }}
+                                        />
+                                        <Legend wrapperStyle={{paddingTop: '20px'}} />
+                                    </RechartsPieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Financial Stats Section */}
                     {financialStats.length > 0 && (

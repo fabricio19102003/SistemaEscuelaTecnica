@@ -1,7 +1,7 @@
 import type { Level } from './course.types';
 import type { Teacher } from './teacher.types';
 
-export type GroupStatus = 'DRAFT' | 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type GroupStatus = 'DRAFT' | 'OPEN' | 'IN_PROGRESS' | 'GRADES_SUBMITTED' | 'COMPLETED' | 'CANCELLED';
 
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
 
@@ -40,9 +40,9 @@ export interface Group {
 
 export interface CreateGroupData {
     levelId: number;
-    teacherId: number;
-    name: string;
-    code: string;
+    teacherId?: number;
+    name?: string;
+    code?: string;
     startDate: string;
     endDate: string;
     maxCapacity: number;

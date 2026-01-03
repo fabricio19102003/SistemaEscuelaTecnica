@@ -198,26 +198,31 @@ model Course {
   code           String    @unique @db.VarChar(20) // Now auto-generated
   description    String?   @db.Text
 
-  durationMonths Int?      @map("duration_months")
+  durationWeeks  Int?      @map("duration_weeks")
+  basePrice      Decimal?  @map("base_price") @db.Decimal(10, 2)
   imageUrl       String?   @map("image_url") @db.VarChar(500)
   isActive       Boolean   @default(true) @map("is_active")
   
   teacherId      Int?      @map("teacher_id") @db.UnsignedInt
-  classroomId    Int?      @map("classroom_id") @db.UnsignedInt
+
+  // Prerequisite
+  previousCourseId Int?      @map("previous_course_id") @db.UnsignedInt
+  previousCourse   Course?   @relation("CoursePrerequisite", fields: [previousCourseId], references: [id], onDelete: SetNull)
+  nextCourses      Course[]  @relation("CoursePrerequisite")
 
   createdAt      DateTime  @default(now()) @map("created_at") 
   updatedAt      DateTime  @updatedAt @map("updated_at") 
 
   // Relaciones
   teacher        Teacher?    @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-  classroom      Classroom?  @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  classrooms     Classroom[]
   levels         Level[]
   schedules      Schedule[]
 
   @@index([code])
   @@index([isActive])
   @@index([teacherId])
-  @@index([classroomId])
+  @@index([previousCourseId])
   @@map("courses")
 }
 
@@ -754,6 +759,7 @@ enum GroupStatus {
   DRAFT
   OPEN
   IN_PROGRESS
+  GRADES_SUBMITTED
   COMPLETED
   CANCELLED
 }
@@ -796,6 +802,19 @@ enum EvaluationType {
   PROJECT
   PARTICIPATION
   OTHER
+}
+
+// ============================================
+// CONFIGURACIÓN DEL SISTEMA
+// ============================================
+
+model SystemSetting {
+  id        Int      @id @default(autoincrement()) @db.UnsignedInt
+  key       String   @unique @db.VarChar(50)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
 }
 
 enum ReportCardStatus {

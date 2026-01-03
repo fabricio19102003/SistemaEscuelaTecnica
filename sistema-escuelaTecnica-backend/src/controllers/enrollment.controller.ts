@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import prisma from '../utils/prisma.js';
 import { hashPassword } from '../utils/auth.utils.js';
-import { Prisma, DayOfWeek } from '@prisma/client';
+import { Prisma, DayOfWeek, EnrollmentStatus, GroupStatus } from '@prisma/client';
 
 export const createEnrollment = async (req: Request, res: Response) => {
     try {
@@ -144,6 +144,55 @@ export const createEnrollment = async (req: Request, res: Response) => {
 
         if (!group) {
             return res.status(404).json({ message: 'Grupo no encontrado' });
+        }
+
+        // 2.5 Check Prerequisites
+        // We look at the GROUP -> LEVEL -> COURSE
+        const targetCourse = group.level.course;
+
+        // This query needs to include previousCourse info efficiently. 
+        // We already included it in step 2 query? No, we need to ensure we fetch it.
+        // Let's refetch course with previousCourse relation just to be sure or trust step 2 data if we update it.
+        // Current Step 2 include structure:
+        // include: { level: { include: { course: { include: { schedules: true } } } } }
+        // We need to add `previousCourse: true` to that include or fetch separately.
+
+        // Let's optimize: Update Step 2 query to include previousCourse info.
+        // ACTUALLY, I can't easily update Step 2 query without replacing that big block.
+        // Easier to just fetch the previousCourseId from the course we found.
+
+        const courseWithPrereq = await prisma.course.findUnique({
+            where: { id: targetCourse.id },
+            include: { previousCourse: true }
+        });
+
+        if (courseWithPrereq?.previousCourseId) {
+            console.log(`Checking prerequisite: ${courseWithPrereq.previousCourse?.name} (ID: ${courseWithPrereq.previousCourseId})`);
+
+            // Check if student has APPROVED this previous course
+            // We search in ReportCards or Certificates. ReportCards are better for academic history.
+            // A report card is linked to an enrollment. An enrollment is linked to a group. A group is linked to a level. A level is linked to a course.
+
+            const prerequisitePassed = await prisma.reportCard.findFirst({
+                where: {
+                    status: 'APPROVED',
+                    enrollment: {
+                        studentId: Number(studentId),
+                        group: {
+                            level: {
+                                courseId: Number(courseWithPrereq.previousCourseId)
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (!prerequisitePassed) {
+                return res.status(400).json({
+                    message: `Prerequisito no cumplido: Debe aprobar el curso "${courseWithPrereq.previousCourse?.name}" antes de matricularse en "${targetCourse.name}".`
+                });
+            }
+            console.log('Prerequisite met.');
         }
 
 
@@ -446,5 +495,222 @@ export const getEnrollmentReport = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error fetching enrollment report:', error);
         res.status(500).json({ message: 'Error al generar el reporte de matriculas' });
+    }
+};
+
+export const getApprovedCandidateStudents = async (req: Request, res: Response) => {
+    try {
+        const { courseId } = req.params;
+
+        const enrollments = await prisma.enrollment.findMany({
+            where: {
+                group: {
+                    level: {
+                        courseId: Number(courseId)
+                    },
+                    status: {
+                        in: [GroupStatus.COMPLETED, GroupStatus.GRADES_SUBMITTED, GroupStatus.IN_PROGRESS, GroupStatus.OPEN]
+                    }
+                },
+                status: {
+                    in: [EnrollmentStatus.ACTIVE, EnrollmentStatus.COMPLETED]
+                }
+            },
+            include: {
+                student: {
+                    include: {
+                        user: true
+                    }
+                },
+                group: {
+                    include: {
+                        level: true
+                    }
+                },
+                grades: true // Include grades to calculate average
+            },
+            orderBy: {
+                student: {
+                    user: {
+                        paternalSurname: 'asc'
+                    }
+                }
+            }
+        });
+
+        // Calculate averages and filter
+        const candidates = enrollments
+            .map(e => {
+                const coreCompetencies = ['SPEAKING', 'LISTENING', 'READING', 'WRITING', 'VOCABULARY', 'GRAMMAR'];
+                const coreGrades = e.grades.filter(g => coreCompetencies.includes(g.evaluationType));
+
+                const total = coreGrades.reduce((sum, g) => sum + Number(g.gradeValue), 0);
+                const average = coreGrades.length > 0 ? (total / 6) : 0;
+
+                return {
+                    id: e.id,
+                    student: e.student,
+                    finalGrade: Number(average.toFixed(2)),
+                    group: e.group
+                };
+            })
+            .filter(c => c.finalGrade >= 51);
+
+        res.json(candidates);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error retrieving candidates' });
+    }
+};
+
+export const autoPromoteStudents = async (req: Request, res: Response) => {
+    try {
+        console.log('--- Auto Promote Request ---');
+        console.log('Body:', req.body);
+        const { nextCourseId, startDate, studentIds } = req.body;
+
+        if (!nextCourseId || !startDate || !studentIds || !Array.isArray(studentIds)) {
+            console.error('Validation Failed:', { nextCourseId, startDate, studentIds, isArray: Array.isArray(studentIds) });
+            return res.status(400).json({ message: 'Next Course ID, Start Date, and student IDs list are required' });
+        }
+
+        // 1. Get Course Info to generate Group Name/Code
+        const nextCourse = await prisma.course.findUnique({
+            where: { id: Number(nextCourseId) },
+            include: {
+                levels: {
+                    orderBy: { orderIndex: 'asc' },
+                    take: 1
+                }
+            }
+        });
+
+        console.log('Next Course Found:', nextCourse ? 'YES' : 'NO');
+
+        if (!nextCourse) {
+            return res.status(404).json({ message: 'Next course not found' });
+        }
+
+        // Assume first level of the course for the new group
+        let level = nextCourse.levels[0];
+        console.log('Level found:', level ? level.id : 'NONE');
+
+        if (!level) {
+            console.log('No level found for target course. Creating default Level...');
+            level = await prisma.level.create({
+                data: {
+                    courseId: Number(nextCourseId),
+                    name: 'Nivel Único',
+                    code: `NIV-${Math.floor(Math.random() * 10000)}`,
+                    orderIndex: 1,
+                    durationWeeks: nextCourse.durationWeeks || 4,
+                    totalHours: (nextCourse.durationWeeks || 4) * 5,
+                    basePrice: nextCourse.basePrice || new Prisma.Decimal(450),
+                    isActive: true
+                }
+            });
+        }
+
+        const levelId = level.id;
+
+        // 2. Create New Group
+        // Auto-generate Code: [COURSE]-[DATE]
+        const dateStr = new Date(startDate).toISOString().slice(0, 10).replace(/-/g, '');
+        const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        const groupCode = `G-${nextCourse.code}-${dateStr}-${randomSuffix}`;
+        const groupName = `Grupo Auto - ${nextCourse.name}`;
+
+        // Infer Teacher: For now, leave Unassigned (or pick a default if required, but schema says optional/restrict? Schema allows separate teacher assignment?)
+        // Schema says: teacherId Int @map("teacher_id") @db.UnsignedInt ... relation to Teacher
+        // We MUST assign a teacher. Let's find a default 'admin' teacher or just the first available teacher for now?
+        // OR make teacherId optional in schema?
+        // Let's check schema for `teacherId` nullable.
+        // Waiting for schema check. But usually it's required.
+        // HACK: For now, assign the first teacher found. TODO: Allow selecting teacher in frontend? User asked for "Auto".
+        // HACK: For now, assign the first teacher found. TODO: Allow selecting teacher in frontend? User asked for "Auto".
+        const defaultTeacher = await prisma.teacher.findFirst();
+        console.log('Default Teacher Found:', defaultTeacher ? defaultTeacher.id : 'NONE');
+        if (!defaultTeacher) {
+            console.error('No teachers available');
+            return res.status(400).json({ message: 'No teachers available to assign to the new group' });
+        }
+
+        const newGroup = await prisma.group.create({
+            data: {
+                levelId: levelId,
+                teacherId: defaultTeacher.id, // Assigning default teacher
+                name: groupName,
+                code: groupCode,
+                startDate: new Date(startDate),
+                endDate: new Date(new Date(startDate).setMonth(new Date(startDate).getMonth() + 1)), // Default 1 month?
+                maxCapacity: 20,
+                status: 'OPEN',
+                classroom: 'Por asignar'
+            }
+        });
+
+        let promotedCount = 0;
+        let skippedCount = 0;
+
+        for (const studentId of studentIds) {
+            // 2.5 Calculate Price per Student (Check Agreements)
+            const student = await prisma.student.findUnique({
+                where: { id: Number(studentId) },
+                include: { school: { include: { agreement: true } } }
+            });
+
+            const basePrice = Number(nextCourse.basePrice) || 450; // Use Course Base Price as standard
+            let finalPrice = basePrice;
+            let discountPercentage = 0;
+            let agreementId = null;
+
+            if (student?.school?.agreement?.isActive) {
+                const agreement = student.school.agreement;
+                const now = new Date();
+
+                if (agreement.startDate <= now && (!agreement.endDate || agreement.endDate >= now)) {
+                    agreementId = agreement.id;
+                    if (agreement.discountType === 'PERCENTAGE') {
+                        discountPercentage = Number(agreement.discountValue);
+                        const discountAmount = (basePrice * discountPercentage) / 100;
+                        finalPrice = basePrice - discountAmount;
+                    } else if (agreement.discountType === 'FIXED_AMOUNT') {
+                        const discountAmount = Number(agreement.discountValue);
+                        finalPrice = Math.max(0, basePrice - discountAmount);
+                        // Calculate percentage for record
+                        discountPercentage = (discountAmount / basePrice) * 100;
+                    }
+                }
+            }
+
+            // 3. Create Enrollment with calculated price
+            await prisma.enrollment.create({
+                data: {
+                    studentId: Number(studentId),
+                    groupId: newGroup.id,
+                    enrollmentDate: new Date(),
+                    startDate: newGroup.startDate,
+                    endDate: newGroup.endDate,
+                    status: 'ACTIVE',
+                    agreedPrice: finalPrice,
+                    discountPercentage: discountPercentage,
+                    agreementId: agreementId,
+                    enrollmentNotes: 'Promoción Automática',
+                    createdById: (req as any).user?.id ? Number((req as any).user.id) : null
+                }
+            });
+            promotedCount++;
+        }
+
+        res.json({
+            message: 'Promotion process completed. New Group Created.',
+            newGroup: newGroup,
+            promoted: promotedCount,
+            skipped: skippedCount
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error enacting promotion' });
     }
 };

@@ -16,6 +16,7 @@ import studentPortalRoutes from './student-portal.routes.js';
 import guardianPortalRoutes from './guardian-portal.routes.js';
 import statsRoutes from './stats.routes.js';
 import notificationRoutes from './notification.routes.js';
+import systemSettingsRoutes from './system-settings.routes.js';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/student-portal', studentPortalRoutes);
 router.use('/guardian-portal', guardianPortalRoutes);
 router.use('/stats', statsRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/settings', systemSettingsRoutes);
 
 export default router;

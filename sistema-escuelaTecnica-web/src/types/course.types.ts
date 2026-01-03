@@ -28,12 +28,14 @@ export interface Course {
     name: string;
     code: string;
     description?: string;
-    durationMonths?: number;
+    durationWeeks?: number;
+    basePrice?: number;
     imageUrl?: string;
     isActive: boolean;
     levels?: Level[];
     teacherId?: number;
-    classroomId?: number;
+    previousCourseId?: number | null;
+    classrooms?: { id: number; name: string }[];
     teacher?: {
         user: {
             firstName: string;
@@ -41,7 +43,7 @@ export interface Course {
             maternalSurname: string | null;
         }
     };
-    classroom?: any;
+    // classroom?: any; removed
     schedules?: Schedule[];
     createdAt?: string;
     updatedAt?: string;
@@ -51,10 +53,12 @@ export interface CreateCourseData {
     name: string;
     // code: string; // Auto-generated
     description?: string;
-    durationMonths?: number;
+    durationWeeks?: number;
+    basePrice?: number;
     image?: File;
     teacherId?: number;
-    classroomId?: number;
+    previousCourseId?: number | null;
+    classroomIds?: number[];
     schedules?: Array<{ dayOfWeek: string; startTime: string; endTime: string }>;
 }
 

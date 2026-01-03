@@ -178,8 +178,18 @@ const EnrollmentPDF = ({ data, credentials, userWhoGenerated, clientIp }: Enroll
     const courseName = course?.name?.toUpperCase() || 'CURSO SIN NOMBRE';
     const levelName = level?.name?.toUpperCase() || '';
     const fullTitle = `${courseName} ${levelName}`;
-    const price = level?.basePrice ? Number(level.basePrice) : 450;
-    const discountPrice = Number(data.agreedPrice);
+    // Price Logic:
+    // If agreedPrice is present, that's what they pay (discountPrice).
+    // The "COSTO Bs." should be the standard price (Level Base Price) unless overridden.
+    
+    // If we have auto-promotion where agreedPrice might be the full price (no discount), both are same?
+    // User wants "Price Base" vs "Price Paid".
+    
+    const baseStandardPrice = level?.basePrice ? Number(level.basePrice) : 450;
+    const pricePaid = data.agreedPrice ? Number(data.agreedPrice) : baseStandardPrice;
+    
+    const price = baseStandardPrice;
+    const discountPrice = pricePaid;
     // Updated to use current date for "Fecha Depósito" as requested
     const dateDepos = new Date().toLocaleDateString('es-ES');
     const period = group?.code?.split('-')[1] ? `${new Date().getMonth() < 6 ? '1' : '2'}/${new Date().getFullYear()}` : '1/2025'; // Estimating period

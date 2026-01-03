@@ -51,5 +51,10 @@ export const CourseService = {
 
     delete: async (id: number | string): Promise<void> => {
         await api.delete(`/courses/${id}`);
+    },
+
+    createLevel: async (courseId: number | string, data: any): Promise<any> => {
+        const response = await api.post(`/courses/${courseId}/levels`, data);
+        return response.data;
     }
 };

@@ -139,6 +139,7 @@ const StudentHistoryPage = () => {
                     })()}
                     {!isLoading && selectedStudent && (
                         <PDFDownloadLink
+                            key={`${selectedStudent.id}-${academicHistory.length}`}
                             document={
                                 <AcademicHistoryPDF 
                                     student={selectedStudent} 
@@ -305,7 +306,7 @@ const StudentHistoryPage = () => {
                             </button>
                         </div>
                         <div className="flex-1 bg-gray-100 p-4">
-                            <PDFViewer width="100%" height="100%" className="w-full h-full rounded-lg shadow-inner border border-gray-200">
+                            <PDFViewer key={`${selectedStudent.id}-${academicHistory.length}`} width="100%" height="100%" className="w-full h-full rounded-lg shadow-inner border border-gray-200">
                                 <AcademicHistoryPDF 
                                     student={selectedStudent} 
                                     history={academicHistory}

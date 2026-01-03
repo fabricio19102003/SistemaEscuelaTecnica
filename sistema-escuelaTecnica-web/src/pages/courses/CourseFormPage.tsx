@@ -10,15 +10,18 @@ import { teacherService } from '../../services/api/teacher.service';
 import { classroomService, type Classroom } from '../../services/api/classroom.service';
 import { ScheduleTemplateService } from '../../services/api/schedule-template.service';
 import ClassroomModal from '../../components/modals/ClassroomModal';
+import { MultiSelect } from '../../components/ui/MultiSelect';
 import type { Teacher } from '../../types/teacher.types';
 
 const courseSchema = z.object({
     name: z.string().min(1, 'El nombre es requerido'),
     // code: z.string().min(1, 'El código es requerido'), // Auto-generated
     description: z.string().optional(),
-    durationMonths: z.string().optional(),
+    durationWeeks: z.string().optional(),
+    basePrice: z.string().optional(),
     teacherId: z.string().optional(),
-    classroomId: z.string().optional(),
+    previousCourseId: z.string().optional(),
+    classroomIds: z.array(z.number()).optional(),
     schedules: z.array(z.object({
         dayOfWeek: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']),
         startTime: z.string().min(1, 'Hora inicio requerida'),
@@ -46,15 +49,19 @@ const CourseFormPage = () => {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [teachers, setTeachers] = useState<Teacher[]>([]);
+    const [courses, setCourses] = useState<any[]>([]); // For prerequisite list
     const [classrooms, setClassrooms] = useState<Classroom[]>([]);
     const [isClassroomModalOpen, setIsClassroomModalOpen] = useState(false);
 
-    const { register, control, handleSubmit, setValue, getValues, formState: { errors }, reset } = useForm<CourseSimpleForm>({
+    const { register, control, handleSubmit, setValue, getValues, watch, formState: { errors }, reset } = useForm<CourseSimpleForm>({
         resolver: zodResolver(courseSchema),
         defaultValues: {
             schedules: []
         }
     });
+    
+    // Watch for changes to force re-render
+    const watchedClassroomIds = watch('classroomIds');
 
     const { fields, append, remove } = useFieldArray({
         control,
@@ -70,12 +77,14 @@ const CourseFormPage = () => {
 
     const loadResources = async () => {
         try {
-            const [teachersData, classroomsData] = await Promise.all([
+            const [teachersData, classroomsData, coursesData] = await Promise.all([
                 teacherService.getAll(),
-                classroomService.getAll()
+                classroomService.getAll(),
+                CourseService.getAll()
             ]);
             setTeachers(teachersData);
             setClassrooms(classroomsData);
+            setCourses(coursesData);
         } catch (error) {
             console.error('Error loading resources:', error);
         }
@@ -89,9 +98,11 @@ const CourseFormPage = () => {
             reset({
                 name: course.name,
                 description: course.description || '',
-                durationMonths: course.durationMonths?.toString() || '',
+                durationWeeks: course.durationWeeks?.toString() || '',
+                basePrice: course.basePrice ? course.basePrice.toString() : '',
                 teacherId: course.teacherId?.toString() || '',
-                classroomId: course.classroomId?.toString() || '',
+                previousCourseId: course.previousCourseId?.toString() || '',
+                classroomIds: course.classrooms?.map((c: any) => c.id) || [],
                 schedules: course.schedules?.map((s: any) => ({
                     dayOfWeek: s.dayOfWeek,
                     startTime: s.startTime ? (typeof s.startTime === 'string' && s.startTime.length > 5 ? s.startTime.substring(11, 16) : s.startTime.substring(0, 5)) : '', // Try to extract HH:mm safely
@@ -130,7 +141,7 @@ const CourseFormPage = () => {
 
     const handleClassroomCreated = (newClassroom: Classroom) => {
         setClassrooms(prev => [...prev, newClassroom]);
-        setValue('classroomId', newClassroom.id.toString());
+        setValue('classroomIds', [...(getValues('classroomIds') || []), newClassroom.id]);
     };
 
     const saveAsTemplate = async () => {
@@ -217,9 +228,11 @@ const CourseFormPage = () => {
             const payload = {
                 name: data.name,
                 description: data.description,
-                durationMonths: data.durationMonths ? Number(data.durationMonths) : undefined,
+                durationWeeks: data.durationWeeks ? Number(data.durationWeeks) : undefined,
+                basePrice: data.basePrice ? Number(data.basePrice) : undefined,
                 teacherId: data.teacherId ? Number(data.teacherId) : undefined,
-                classroomId: data.classroomId ? Number(data.classroomId) : undefined,
+                previousCourseId: data.previousCourseId ? Number(data.previousCourseId) : undefined,
+                classroomIds: data.classroomIds,
                 schedules: data.schedules,
                 image: imageFile || undefined
             };
@@ -318,11 +331,21 @@ const CourseFormPage = () => {
                             {errors.name && <span className="text-red-400 text-xs">{errors.name.message}</span>}
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700">Duración (Meses)</label>
+                            <label className="text-sm font-bold text-gray-700">Duración (Semanas)</label>
                             <input
                                 type="number"
-                                {...register('durationMonths')}
+                                {...register('durationWeeks')}
                                 className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">Precio Base del Curso (Bs)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                {...register('basePrice')}
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="Ej. 450.00"
                             />
                         </div>
 
@@ -359,19 +382,31 @@ const CourseFormPage = () => {
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700">Aula / Laboratorio</label>
+                            <label className="text-sm font-bold text-gray-700">Curso Prerequisito (Opcional)</label>
+                            <select
+                                {...register('previousCourseId')}
+                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="">Ninguno (Primer Nivel)</option>
+                                {courses
+                                    .filter(c => c.id !== (id ? Number(id) : -1)) // Exclude self
+                                    .map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name} {c.code ? `(${c.code})` : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-gray-700">Aulas / Laboratorios</label>
                             <div className="flex gap-2">
-                                <select
-                                    {...register('classroomId')}
-                                    className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                >
-                                    <option value="">Seleccione un aula</option>
-                                    {classrooms.map((classroom) => (
-                                        <option key={classroom.id} value={classroom.id}>
-                                            {classroom.name} (Cap: {classroom.capacity})
-                                        </option>
-                                    ))}
-                                </select>
+                                <MultiSelect
+                                    options={classrooms.map(c => ({ value: c.id, label: `${c.name} (Cap: ${c.capacity})` }))}
+                                    value={watchedClassroomIds || []}
+                                    onChange={(val) => setValue('classroomIds', val as number[])}
+                                    placeholder="Seleccione aulas..."
+                                    className="w-full"
+                                />
                                 <button
                                     type="button"
                                     onClick={() => setIsClassroomModalOpen(true)}

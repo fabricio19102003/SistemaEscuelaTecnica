@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTeacherStore } from '../../store/teacher.store';
 import { useGradeStore } from '../../store/grade.store';
 import { useAuthStore } from '../../store/auth.store';
+import { useSystemSettingsStore } from '../../store/system-settings.store';
 import { 
     ArrowLeft, 
     Search,
@@ -24,6 +25,7 @@ import ReportCardPDF from '../../components/grades/ReportCardPDF';
 import OfficialReportPDF from '../../components/grades/OfficialReportPDF';
 import Swal from 'sweetalert2';
 import axios from '../../services/api/axios';
+import { submitGrades } from '../../services/group.service';
 
 interface TeacherCourseDetailPageProps {
     defaultTab?: 'students' | 'grades';
@@ -44,6 +46,7 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
     const { user } = useAuthStore();
     const { myCourses, selectedCourseStudents, fetchCourseStudents, fetchMyCourses, isLoading } = useTeacherStore();
     const { fetchGradesByGroup, enrollments: gradeEnrollments, saveGrades, loading: gradesLoading } = useGradeStore();
+    const { getSettingValue, fetchSettings } = useSystemSettingsStore();
     
     const isGradesModule = defaultTab === 'grades';
 
@@ -87,6 +90,7 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
             fetchCourseStudents(Number(groupId));
             if (isGradesModule) {
                 fetchGradesByGroup(Number(groupId));
+                fetchSettings();
             }
         }
     }, [groupId, isGradesModule, fetchCourseStudents, fetchGradesByGroup, myCourses.length, fetchMyCourses]);
@@ -190,7 +194,19 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
             setGeneratingPdf(true);
             const { data } = await axios.get(`/grades/report-card/${enrollmentId}`);
             
-            const blob = await pdf(<ReportCardPDF data={data} userWhoGenerated={userName} clientIp={clientIp} />).toBlob();
+            const blob = await pdf(
+                <ReportCardPDF 
+                    data={data} 
+                    period={data.period}
+                    courseName={data.courseName}
+                    teacherName={data.teacherName}
+                    studentName={data.studentName}
+                    scheduleTime={data.schedule}
+                    nextCourse={data.nextCourse} // Passing the backend-provided value
+                    userWhoGenerated={userName} 
+                    clientIp={clientIp} 
+                />
+            ).toBlob();
             
             const u = enrollment.student.user;
             const fullName = `${u.firstName}_${u.paternalSurname}`.toUpperCase();
@@ -327,6 +343,42 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
 
     const userName = user ? `${user.firstName} ${user.paternalSurname} ${user.maternalSurname || ''}`.trim() : 'Docente';
 
+    const handleFinalizeGrades = async () => {
+        const result = await Swal.fire({
+            title: '¿Finalizar carga de notas?',
+            text: "Una vez finalizado, se notificará a la administración y no podrás realizar más cambios. ¿Estás seguro?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#004694',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, finalizar',
+            cancelButtonText: 'Cancelar',
+             background: '#1f2937', color: '#fff'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await submitGrades(Number(groupId));
+                // Update local state or refetch
+                await fetchMyCourses(); 
+                Swal.fire({
+                    title: 'Finalizado!',
+                    text: 'Las notas han sido enviadas correctamente.',
+                    icon: 'success',
+                     background: '#1f2937', color: '#fff'
+                });
+            } catch (error) {
+                console.error('Error submitting grades:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Hubo un problema al finalizar las notas.',
+                    icon: 'error',
+                     background: '#1f2937', color: '#fff'
+                });
+            }
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -350,6 +402,15 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
                                     <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100 font-medium">{courseInfo.level.name}</span>
                                     <span className="text-gray-400">|</span>
                                     <span className="font-mono text-gray-600">{courseInfo.code}</span>
+                                    <span className="text-gray-400">|</span>
+                                    <span className={`px-2 py-0.5 rounded border font-medium ${
+                                        courseInfo.status === 'GRADES_SUBMITTED' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                                        courseInfo.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
+                                        'bg-gray-100 text-gray-800 border-gray-200'
+                                    }`}>
+                                        {courseInfo.status === 'GRADES_SUBMITTED' ? 'Notas Enviadas' : 
+                                         courseInfo.status === 'COMPLETED' ? 'Finalizado' : 'En Progreso'}
+                                    </span>
                                 </>
                             )}
                         </div>
@@ -368,14 +429,25 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
                     )}
 
                     {isGradesModule && viewMode === 'list' && (
-                         <button
-                            onClick={handlePreviewOfficialReport}
-                            disabled={generatingPdf}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#BF0811] hover:bg-[#a3070f] text-white rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {generatingPdf ? <Loader className="animate-spin" size={18} /> : <FileText size={18} />}
-                            <span className="font-bold">Generar Acta</span>
-                        </button>
+                        <>
+                             {courseInfo?.status !== 'GRADES_SUBMITTED' && courseInfo?.status !== 'COMPLETED' && (
+                                <button
+                                    onClick={handleFinalizeGrades}
+                                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm transition-all active:scale-95"
+                                >
+                                    <CheckCircle size={18} />
+                                    <span className="font-bold">Finalizar Notas</span>
+                                </button>
+                             )}
+                            <button
+                                onClick={handlePreviewOfficialReport}
+                                disabled={generatingPdf}
+                                className="flex items-center gap-2 px-4 py-2 bg-[#BF0811] hover:bg-[#a3070f] text-white rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {generatingPdf ? <Loader className="animate-spin" size={18} /> : <FileText size={18} />}
+                                <span className="font-bold">Generar Acta</span>
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
@@ -529,13 +601,29 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
                                                                             </button>
                                                                         </>
                                                                      )}
-                                                                     <button
-                                                                        onClick={() => handleStartGrading(enrollment)}
-                                                                        className="flex items-center gap-2 bg-[#004694] hover:bg-[#003da5] text-white px-3 py-1.5 rounded-lg transition-colors text-sm font-bold shadow-sm"
-                                                                     >
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const areGradesOpen = getSettingValue('GRADES_OPEN', 'true') === 'true';
+                                                                            if (!areGradesOpen) {
+                                                                                Swal.fire({
+                                                                                    title: 'Deshabilitado',
+                                                                                    text: 'El registro de notas está deshabilitado por administración.',
+                                                                                    icon: 'warning',
+                                                                                    background: '#1f2937', color: '#fff'
+                                                                                });
+                                                                                return;
+                                                                            }
+                                                                            handleStartGrading(enrollment)
+                                                                        }}
+                                                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm font-bold shadow-sm ${
+                                                                            getSettingValue('GRADES_OPEN', 'true') === 'true' 
+                                                                                ? 'bg-[#004694] hover:bg-[#003da5] text-white' 
+                                                                                : 'bg-gray-300 cursor-not-allowed text-gray-500'
+                                                                        }`}
+                                                                    >
                                                                         <Edit size={16} />
                                                                         Calificar
-                                                                     </button>
+                                                                    </button>
                                                                  </div>
                                                             </td>
                                                         )}
@@ -557,6 +645,8 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
                         const selectedEnrollment = gradeEnrollments.find(e => e.id === selectedEnrollmentId);
                         if (!selectedEnrollment) return null;
                         const s = selectedEnrollment.student;
+                        const isReadOnly = courseInfo?.status === 'GRADES_SUBMITTED' || courseInfo?.status === 'COMPLETED';
+                        
                         return (
                             <div className="flex justify-between items-center bg-white border border-gray-200 p-6 rounded-xl mb-6 shadow-sm">
                                 <div className="flex items-center gap-4">
@@ -577,17 +667,24 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
                                         <h3 className="text-[#004694] font-bold text-2xl mb-1">
                                             {s.user.firstName} {s.user.paternalSurname}
                                         </h3>
-                                        <p className="text-gray-500">Ingrese las notas para cada competencia</p>
+                                        <p className="text-gray-500">
+                                            {isReadOnly 
+                                                ? <span className="text-amber-600 font-bold flex items-center gap-2"><AlertCircle size={16}/> Curso Finalizado - Modo Lectura</span>
+                                                : "Ingrese las notas para cada competencia"
+                                            }
+                                        </p>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={handleSaveGrades}
-                                    disabled={gradesLoading}
-                                    className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-bold shadow-sm transition-all active:scale-95"
-                                >
-                                    {gradesLoading ? <Loader className="animate-spin" size={20} /> : <Save size={20} />}
-                                    Guardar Notas
-                                </button>
+                                {!isReadOnly && (
+                                    <button
+                                        onClick={handleSaveGrades}
+                                        disabled={gradesLoading}
+                                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 font-bold shadow-sm transition-all active:scale-95"
+                                    >
+                                        {gradesLoading ? <Loader className="animate-spin" size={20} /> : <Save size={20} />}
+                                        Guardar Notas
+                                    </button>
+                                )}
                             </div>
                         );
                     })()}
@@ -613,9 +710,10 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
                                             <div className="relative">
                                                 <input
                                                     type="number" min="0" max="100"
+                                                    disabled={courseInfo?.status === 'GRADES_SUBMITTED' || courseInfo?.status === 'COMPLETED'}
                                                     value={gradesData[comp.id]?.progressTest ?? ''}
                                                     onChange={(e) => handleGradeChange(comp.id, 'progressTest', e.target.value)}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 text-center font-bold focus:border-[#004694] focus:ring-1 focus:ring-[#004694] focus:outline-none transition-all shadow-sm"
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 text-center font-bold focus:border-[#004694] focus:ring-1 focus:ring-[#004694] focus:outline-none transition-all shadow-sm disabled:bg-gray-100 disabled:text-gray-500"
                                                     placeholder="0"
                                                 />
                                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-bold">%</span>
@@ -626,9 +724,10 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
                                             <div className="relative">
                                                 <input
                                                     type="number" min="0" max="100"
+                                                    disabled={courseInfo?.status === 'GRADES_SUBMITTED' || courseInfo?.status === 'COMPLETED'}
                                                     value={gradesData[comp.id]?.classPerformance ?? ''}
                                                     onChange={(e) => handleGradeChange(comp.id, 'classPerformance', e.target.value)}
-                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 text-center font-bold focus:border-[#004694] focus:ring-1 focus:ring-[#004694] focus:outline-none transition-all shadow-sm"
+                                                    className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-gray-900 text-center font-bold focus:border-[#004694] focus:ring-1 focus:ring-[#004694] focus:outline-none transition-all shadow-sm disabled:bg-gray-100 disabled:text-gray-500"
                                                     placeholder="0"
                                                 />
                                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-bold">%</span>
@@ -639,9 +738,10 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
                                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Comentarios</label>
                                         <textarea 
                                             rows={2}
+                                            disabled={courseInfo?.status === 'GRADES_SUBMITTED' || courseInfo?.status === 'COMPLETED'}
                                             value={gradesData[comp.id]?.comments ?? ''}
                                             onChange={(e) => handleGradeChange(comp.id, 'comments', e.target.value)}
-                                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm focus:border-[#004694] focus:ring-1 focus:ring-[#004694] focus:outline-none placeholder-gray-400 resize-none transition-all shadow-sm"
+                                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm focus:border-[#004694] focus:ring-1 focus:ring-[#004694] focus:outline-none placeholder-gray-400 resize-none transition-all shadow-sm disabled:bg-gray-100 disabled:text-gray-500"
                                             placeholder="Escriba un comentario..."
                                         />
                                     </div>
@@ -710,6 +810,12 @@ const TeacherCourseDetailPage = ({ defaultTab = 'students' }: TeacherCourseDetai
                              <PDFViewer width="100%" height="100%" className="w-full h-full">
                                 <ReportCardPDF 
                                     data={reportPreviewData} 
+                                    period={reportPreviewData.period}
+                                    courseName={reportPreviewData.courseName}
+                                    teacherName={reportPreviewData.teacherName}
+                                    studentName={reportPreviewData.studentName}
+                                    scheduleTime={reportPreviewData.schedule}
+                                    nextCourse={reportPreviewData.nextCourse} 
                                     userWhoGenerated={userName} 
                                     clientIp={clientIp} 
                                 />

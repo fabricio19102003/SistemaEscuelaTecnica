@@ -14,13 +14,17 @@ import {
 } from 'lucide-react';
 import TiltCard from '../../components/ui/TiltCard';
 
+import { useSystemSettingsStore } from '../../store/system-settings.store';
+
 const GradeDashboardPage: React.FC = () => {
     const navigate = useNavigate();
     const { fetchAllGrades, enrollments, loading } = useGradeStore();
+    const { getSettingValue, fetchSettings } = useSystemSettingsStore();
 
     useEffect(() => {
         fetchAllGrades();
-    }, [fetchAllGrades]);
+        fetchSettings();
+    }, [fetchAllGrades, fetchSettings]);
 
     // Calculate Summary Metrics
     const metrics = useMemo(() => {
@@ -163,7 +167,9 @@ const GradeDashboardPage: React.FC = () => {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500 font-semibold uppercase tracking-wider">Periodo Actual</p>
-                                    <p className="text-3xl font-black text-gray-900 mt-1">2025 - I</p>
+                                    <p className="text-3xl font-black text-gray-900 mt-1">
+                                        {getSettingValue('CURRENT_PERIOD', 'Calculando...')}
+                                    </p>
                                 </div>
                             </div>
                         </TiltCard>

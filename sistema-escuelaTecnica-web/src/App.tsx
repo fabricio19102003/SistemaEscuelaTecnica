@@ -27,6 +27,7 @@ import OfficialReportPage from './pages/grades/OfficialReportPage';
 import UserDashboardPage from './pages/users/UserDashboardPage';
 import UserFormPage from './pages/users/UserFormPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 import StudentHistoryPage from './pages/students/StudentHistoryPage';
 
 // Protected Route Wrapper
@@ -73,6 +74,7 @@ import TeacherAttendancePage from './pages/teacher/TeacherAttendancePage';
 import StudentPortalPage from './pages/student/StudentPortalPage';
 import StudentCoursePage from './pages/student/StudentCoursePage';
 import StudentNotificationsPage from './pages/student/StudentNotificationsPage';
+import StudentPortalHistoryPage from './pages/student/StudentHistoryPage';
 import GuardianPortalPage from './pages/guardian/GuardianPortalPage';
 import GuardianStudentCoursePage from './pages/guardian/GuardianStudentCoursePage';
 import StudentLayout from './layouts/StudentLayout';
@@ -114,6 +116,7 @@ function App() {
                     <Route path="portal" element={<StudentPortalPage />} />
                     <Route path="course/:enrollmentId" element={<StudentCoursePage />} />
                     <Route path="notifications" element={<StudentNotificationsPage />} />
+                    <Route path="history" element={<StudentPortalHistoryPage />} />
                     {/* Default redirect to portal */}
                     <Route index element={<Navigate to="portal" replace />} />
                 </Route>
@@ -171,6 +174,9 @@ function App() {
                     <Route path="users" element={<UserDashboardPage />} />
                     <Route path="users/new" element={<UserFormPage />} />
                     <Route path="users/:id/edit" element={<UserFormPage />} />
+                    
+                    {/* Settings */}
+                    <Route path="settings" element={<AdminSettingsPage />} />
                 </Route>
 
                 {/* Default Redirect */}

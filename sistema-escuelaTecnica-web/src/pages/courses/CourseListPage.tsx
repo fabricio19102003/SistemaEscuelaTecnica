@@ -125,6 +125,7 @@ const CourseListPage = () => {
                                 <th className="p-4 text-white font-bold uppercase text-xs">Curso</th>
                                 <th className="p-4 text-white font-bold uppercase text-xs">Código</th>
                                 <th className="p-4 text-white font-bold uppercase text-xs">Docente</th>
+                                <th className="p-4 text-white font-bold uppercase text-xs">Aulas</th>
                                 <th className="p-4 text-white font-bold uppercase text-xs">Duración</th>
                                 <th className="p-4 text-white font-bold uppercase text-xs text-right">Acciones</th>
                             </tr>
@@ -169,7 +170,20 @@ const CourseListPage = () => {
                                         )}
                                     </td>
                                     <td className="p-4 text-gray-600">
-                                        {course.durationMonths ? `${course.durationMonths} meses` : '-'}
+                                        <div className="flex flex-wrap gap-1">
+                                            {course.classrooms && course.classrooms.length > 0 ? (
+                                                course.classrooms.map((c: any) => (
+                                                    <span key={c.id} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">
+                                                        {c.name}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-gray-400 text-xs italic">Sin aulas</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="p-4 text-gray-600">
+                                        {course.durationWeeks ? `${course.durationWeeks} semanas` : '-'}
                                     </td>
                                     <td className="p-4 text-right">
                                         <div className="flex justify-end gap-2">

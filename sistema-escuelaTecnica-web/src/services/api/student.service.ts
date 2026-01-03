@@ -29,5 +29,9 @@ export const studentService = {
     getHistory: async (id: string): Promise<any[]> => {
         const response = await api.get(`/students/${id}/history`);
         return response.data;
+    },
+    getEligible: async (courseId: number): Promise<Student[]> => {
+        const response = await api.get('/students/eligible', { params: { courseId } });
+        return response.data;
     }
 };

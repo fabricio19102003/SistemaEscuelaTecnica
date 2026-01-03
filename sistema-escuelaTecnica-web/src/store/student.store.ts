@@ -16,7 +16,8 @@ interface StudentState {
     updateStudent: (id: string, data: UpdateStudentDTO | FormData) => Promise<void>;
     deleteStudent: (id: string) => Promise<void>;
     clearError: () => void;
-    setSelectedStudent: (student: Student | null) => void;
+    eligibleStudents: Student[];
+    fetchEligibleStudents: (courseId: number) => Promise<void>;
 }
 
 export const useStudentStore = create<StudentState>((set) => ({
@@ -99,5 +100,16 @@ export const useStudentStore = create<StudentState>((set) => ({
     },
 
     clearError: () => set({ error: null }),
-    setSelectedStudent: (student) => set({ selectedStudent: student }),
+    setSelectedStudent: (student: Student | null) => set({ selectedStudent: student }),
+
+    eligibleStudents: [],
+    fetchEligibleStudents: async (courseId: number) => {
+        set({ isLoading: true, error: null, eligibleStudents: [] });
+        try {
+            const students = await studentService.getEligible(courseId);
+            set({ eligibleStudents: students, isLoading: false });
+        } catch (error: any) {
+            set({ error: error.response?.data?.message || 'Error fetching eligible students', isLoading: false });
+        }
+    }
 }));

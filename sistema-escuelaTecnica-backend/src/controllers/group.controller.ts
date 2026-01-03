@@ -9,46 +9,84 @@ import type { Prisma } from '@prisma/client';
 export const createGroup = async (req: Request, res: Response) => {
     const {
         levelId,
-        teacherId,
-        name,
-        code,
         startDate,
         endDate,
         maxCapacity,
         minCapacity,
-        classroom,
-        notes,
-        schedules // Array of { dayOfWeek, startTime, endTime }
+        notes
+        // Removed: teacherId, name, code, classroom, schedules (Auto-generated/fetched)
     } = req.body;
 
     try {
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Create Group
+            // 1. Fetch Level and associated Course details
+            const level = await tx.level.findUnique({
+                where: { id: Number(levelId) },
+                include: {
+                    course: {
+                        include: {
+                            teacher: true,
+                            classrooms: true,
+                            schedules: true
+                        }
+                    }
+                }
+            });
+
+            if (!level) {
+                throw new Error('Level not found');
+            }
+
+            const course = level.course;
+
+            // TODO: Decide if we strictly require a teacher or allow null
+            if (!course.teacherId) {
+                // For now, let's allow it but warn or just leave empty if schema allows
+                // Schema has teacherId as Int (required) or Int? (optional)?
+                // Checking schema... Group.teacherId is Int (required).
+                // So we MUST have a teacher.
+                throw new Error(`The course "${course.name}" does not have a teacher assigned. Cannot create group.`);
+            }
+
+            // 2. Auto-generate Name and Code
+            // Name format: "{CourseName} - {LevelName}"
+            const groupName = `${course.name} - ${level.name}`;
+
+            // Code format: "GRP-{CourseCode}-{LevelCode}-{Year}-{Random4}"
+            const periodYear = new Date(startDate).getFullYear();
+            const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+            const groupCode = `GRP-${course.code}-${level.code}-${periodYear}-${randomSuffix}`;
+
+            // 3. Auto-populate other fields
+            const assignedTeacherId = course.teacherId;
+            const assignedClassroom = course.classrooms?.[0]?.name ?? null;
+
+            // 4. Create Group
             const newGroup = await tx.group.create({
                 data: {
                     levelId: Number(levelId),
-                    teacherId: Number(teacherId),
-                    name,
-                    code,
+                    teacherId: assignedTeacherId,
+                    name: groupName,
+                    code: groupCode,
                     startDate: new Date(startDate),
                     endDate: new Date(endDate),
                     maxCapacity: Number(maxCapacity),
                     minCapacity: minCapacity ? Number(minCapacity) : 5,
                     currentEnrolled: 0,
                     status: 'OPEN',
-                    classroom,
+                    classroom: assignedClassroom,
                     notes
                 }
             });
 
-            // 2. Create Schedules
-            if (schedules && Array.isArray(schedules) && schedules.length > 0) {
+            // 5. Copy Schedules from Course
+            if (course.schedules && course.schedules.length > 0) {
                 await tx.schedule.createMany({
-                    data: schedules.map((s: any) => ({
+                    data: course.schedules.map((s) => ({
                         groupId: newGroup.id,
                         dayOfWeek: s.dayOfWeek,
-                        startTime: new Date(`1970-01-01T${s.startTime}Z`), // Expecting "HH:mm:ss" or ISO
-                        endTime: new Date(`1970-01-01T${s.endTime}Z`)
+                        startTime: s.startTime,
+                        endTime: s.endTime
                     }))
                 });
             }
@@ -59,7 +97,7 @@ export const createGroup = async (req: Request, res: Response) => {
         res.status(201).json(result);
     } catch (error: any) {
         console.error('Error creating group:', error);
-        res.status(400).json({ message: 'Error creating group: ' + error.message });
+        res.status(400).json({ message: error.message || 'Error creating group' });
     }
 };
 

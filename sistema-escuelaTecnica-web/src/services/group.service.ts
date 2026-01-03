@@ -26,3 +26,11 @@ export const updateGroup = async (id: number, data: UpdateGroupData): Promise<Gr
 export const deleteGroup = async (id: number): Promise<void> => {
     await axios.delete(`${API_URL}/${id}`);
 };
+
+export const submitGrades = async (groupId: number): Promise<void> => {
+    await axios.post(`${API_URL}/${groupId}/submit-grades`);
+};
+
+export const closeGroup = async (groupId: number): Promise<void> => {
+    await axios.post(`${API_URL}/${groupId}/close`);
+};

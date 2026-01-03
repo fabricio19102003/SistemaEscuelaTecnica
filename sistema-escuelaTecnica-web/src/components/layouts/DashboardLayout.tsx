@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
-import { LogOut, User, Menu, GraduationCap, Users, BookOpen, LayoutDashboard, School, FileSignature, ClipboardCheck, ClipboardList, Briefcase } from 'lucide-react';
+import { LogOut, User, Menu, GraduationCap, Users, BookOpen, LayoutDashboard, School, FileSignature, ClipboardCheck, ClipboardList, Briefcase, Settings, Layers } from 'lucide-react';
 import { NotificationBell } from '../layout/NotificationBell';
 import logo from '../../assets/logo_school.png';
 
@@ -28,6 +28,7 @@ const DashboardLayout = () => {
         { path: '/dashboard/agreements', label: 'Convenios', icon: FileSignature, roles: ['ADMIN'] },
         { path: '/dashboard/enrollments', label: 'Matrículas', icon: ClipboardList, roles: ['ADMIN', 'TEACHER'] },  
         { path: '/dashboard/grades', label: 'Calificaciones', icon: ClipboardCheck, roles: ['ADMIN', 'TEACHER'] },
+        { path: '/dashboard/settings', label: 'Configuración', icon: Settings, roles: ['ADMIN'] },
     ];
 
     return (

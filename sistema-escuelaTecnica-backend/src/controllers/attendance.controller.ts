@@ -40,7 +40,7 @@ export const getAttendanceByGroupAndDate = async (req: Request, res: Response) =
         const enrollments = await prisma.enrollment.findMany({
             where: {
                 groupId: Number(groupId),
-                status: 'ACTIVE',
+                status: { in: ['ACTIVE', 'COMPLETED'] },
             },
             include: {
                 student: {
@@ -152,7 +152,7 @@ export const getAttendanceStats = async (req: Request, res: Response) => {
         const enrollments = await prisma.enrollment.findMany({
             where: {
                 groupId: Number(groupId),
-                status: 'ACTIVE'
+                status: { in: ['ACTIVE', 'COMPLETED'] }
             },
             include: {
                 student: {

@@ -25,7 +25,7 @@ export const createCourse = async (req: Request, res: Response) => {
             }
         }
 
-        const { name, description, durationMonths, teacherId, classroomId, schedules } = bodyData;
+        const { name, description, durationWeeks, teacherId, classroomIds, schedules, previousCourseId } = bodyData;
 
         let imageUrl = bodyData.imageUrl;
         if (req.file) {
@@ -46,21 +46,35 @@ export const createCourse = async (req: Request, res: Response) => {
                 code,
                 description: description ? description.toUpperCase() : null,
 
-                durationMonths: durationMonths ? Number(durationMonths) : null,
+                durationWeeks: durationWeeks ? Number(durationWeeks) : null,
                 imageUrl,
                 isActive: true,
                 teacherId: teacherId ? Number(teacherId) : null,
-                classroomId: classroomId ? Number(classroomId) : null,
-                schedules: {
-                    create: schedules?.map((s: any) => ({
-                        dayOfWeek: s.dayOfWeek,
-                        startTime: new Date(`1970-01-01T${s.startTime}:00Z`), // Ensure correct format
-                        endTime: new Date(`1970-01-01T${s.endTime}:00Z`)
-                    }))
-                }
+                previousCourseId: previousCourseId ? Number(previousCourseId) : null,
+                ...(classroomIds && Array.isArray(classroomIds) && classroomIds.length > 0 ? {
+                    classrooms: {
+                        connect: classroomIds.map((id: number | string) => ({ id: Number(id) }))
+                    }
+                } : {}),
+                ...(schedules && Array.isArray(schedules) && schedules.length > 0 ? {
+                    schedules: {
+                        create: schedules.map((s: any) => ({
+                            dayOfWeek: s.dayOfWeek,
+                            startTime: new Date(`1970-01-01T${s.startTime}:00Z`), // Ensure correct format
+                            endTime: new Date(`1970-01-01T${s.endTime}:00Z`)
+                        }))
+                    }
+                } : {})
             },
             include: {
-                schedules: true
+                schedules: true,
+                teacher: {
+                    include: {
+                        user: true
+                    }
+                },
+                classrooms: true,
+                previousCourse: true
             }
         });
         res.status(201).json(newCourse);
@@ -83,8 +97,9 @@ export const getCourseById = async (req: Request, res: Response) => {
                 teacher: {
                     include: { user: { select: { firstName: true, paternalSurname: true, maternalSurname: true } } }
                 },
-                classroom: true,
-                schedules: true
+                classrooms: true,
+                schedules: true,
+                previousCourse: true
             }
         });
 
@@ -110,14 +125,14 @@ export const updateCourse = async (req: Request, res: Response) => {
             }
         }
 
-        const { name, description, durationMonths, isActive, teacherId, classroomId, schedules } = bodyData;
+        const { name, description, durationWeeks, isActive, teacherId, classroomIds, schedules, previousCourseId } = bodyData;
 
         const updateData: Prisma.CourseUpdateInput = {};
 
         if (name) updateData.name = name.toUpperCase();
         if (description !== undefined) updateData.description = description ? description.toUpperCase() : null;
 
-        if (durationMonths !== undefined) updateData.durationMonths = durationMonths ? Number(durationMonths) : null;
+        if (durationWeeks !== undefined) updateData.durationWeeks = durationWeeks ? Number(durationWeeks) : null;
         if (isActive !== undefined) updateData.isActive = Boolean(isActive);
 
         if (teacherId !== undefined) {
@@ -125,9 +140,15 @@ export const updateCourse = async (req: Request, res: Response) => {
             else updateData.teacher = { disconnect: true };
         }
 
-        if (classroomId !== undefined) {
-            if (classroomId) updateData.classroom = { connect: { id: Number(classroomId) } };
-            else updateData.classroom = { disconnect: true };
+        if (classroomIds !== undefined) {
+            updateData.classrooms = {
+                set: Array.isArray(classroomIds) ? classroomIds.map((id: number | string) => ({ id: Number(id) })) : []
+            };
+        }
+
+        if (previousCourseId !== undefined) {
+            if (previousCourseId) updateData.previousCourse = { connect: { id: Number(previousCourseId) } };
+            else updateData.previousCourse = { disconnect: true };
         }
 
         if (req.file) {
@@ -191,7 +212,7 @@ export const getCourses = async (req: Request, res: Response) => {
                 teacher: {
                     include: { user: { select: { firstName: true, paternalSurname: true, maternalSurname: true } } }
                 },
-                classroom: true,
+                classrooms: true,
                 schedules: true
             },
             where: { isActive: true }

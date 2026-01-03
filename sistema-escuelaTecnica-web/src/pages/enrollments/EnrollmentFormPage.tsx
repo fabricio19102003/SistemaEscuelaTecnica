@@ -12,7 +12,7 @@ import EnrollmentPDF from '../../components/enrollment/EnrollmentPDF';
 
 const EnrollmentFormPage = () => {
     const navigate = useNavigate();
-    const { students, fetchStudents } = useStudentStore();
+    const { eligibleStudents, fetchEligibleStudents } = useStudentStore();
     const { courses, fetchCourses } = useCourseStore();
     const { createEnrollment } = useEnrollmentStore();
     const { user } = useAuthStore();
@@ -36,9 +36,17 @@ const EnrollmentFormPage = () => {
             .then(data => setClientIp(data.ip))
             .catch(() => setClientIp('No disponible'));
             
-        fetchStudents();
+        // fetchStudents(); // No longer needed as we fetch by eligibility
         fetchCourses();
-    }, [fetchStudents, fetchCourses]);
+    }, [fetchCourses]);
+
+    // Added Logic: Fetch eligible students when course changes
+    useEffect(() => {
+        if (selectedCourseId) {
+            setSelectedStudentId(''); // Reset selection
+            fetchEligibleStudents(Number(selectedCourseId));
+        }
+    }, [selectedCourseId, fetchEligibleStudents]);
 
     // Price Calculation Effect
     useEffect(() => {
@@ -48,7 +56,7 @@ const EnrollmentFormPage = () => {
             return;
         }
 
-        const student = students.find(s => s.id === Number(selectedStudentId));
+        const student = eligibleStudents.find(s => s.id === Number(selectedStudentId));
         const course = courses.find(c => c.id === Number(selectedCourseId));
         
         console.log('--- Price Calculation ---');
@@ -101,7 +109,7 @@ const EnrollmentFormPage = () => {
             setDiscountDetails(info);
         }
 
-    }, [selectedStudentId, selectedCourseId, students, courses]);
+    }, [selectedStudentId, selectedCourseId, eligibleStudents, courses]);
 
     const handleDownloadPDF = async () => {
         if (!enrollmentResult) return;
@@ -221,35 +229,11 @@ const EnrollmentFormPage = () => {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 
-                {/* Student Selection */}
-                <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
-                        <div className="p-2 bg-blue-50 rounded-lg text-blue-600 border border-blue-100"><GraduationCap size={24} /></div>
-                        <h2 className="text-xl font-bold text-[#004694]">Seleccionar Estudiante</h2>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700">Estudiante</label>
-                        <select 
-                            className="glass-input w-full"
-                            value={selectedStudentId}
-                            onChange={(e) => setSelectedStudentId(e.target.value)}
-                            required
-                        >
-                            <option value="">Seleccione un estudiante...</option>
-                            {students.filter(s => s.enrollmentStatus !== 'INACTIVE').map(student => (
-                                <option key={student.id} value={student.id}>
-                                    {student.documentNumber} - {student.user?.firstName} {student.user?.paternalSurname} {student.user?.maternalSurname}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </section>
-
-                {/* Course Selection */}
+                {/* Course Selection (Ahora Primero) */}
                 <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
                         <div className="p-2 bg-purple-50 rounded-lg text-purple-600 border border-purple-100"><Users size={24} /></div>
-                        <h2 className="text-xl font-bold text-[#004694]">Seleccionar Curso</h2>
+                        <h2 className="text-xl font-bold text-[#004694]">1. Seleccionar Curso</h2>
                     </div>
                     <div className="space-y-2">
                          <label className="text-sm font-bold text-gray-700">Curso</label>
@@ -259,13 +243,47 @@ const EnrollmentFormPage = () => {
                             onChange={(e) => setSelectedCourseId(e.target.value)}
                             required
                         >
-                            <option value="">Seleccione un curso...</option>
+                            <option value="">Seleccione un curso para ver requisitos...</option>
                             {courses.filter(c => c.isActive).map(course => (
                                 <option key={course.id} value={course.id}>
                                     {course.code} - {course.name}
                                 </option>
                             ))}
                         </select>
+                    </div>
+                </section>
+
+                {/* Student Selection (Depende del curso) */}
+                <section className={`bg-white border border-gray-200 rounded-2xl p-6 shadow-sm transition-opacity ${!selectedCourseId ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                        <div className="p-2 bg-blue-50 rounded-lg text-blue-600 border border-blue-100"><GraduationCap size={24} /></div>
+                        <h2 className="text-xl font-bold text-[#004694]">2. Seleccionar Estudiante</h2>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-gray-700">Estudiante (Filtrado por Prerrequisitos)</label>
+                        <select 
+                            className="glass-input w-full"
+                            value={selectedStudentId}
+                            onChange={(e) => setSelectedStudentId(e.target.value)}
+                            required
+                            disabled={!selectedCourseId}
+                        >
+                            <option value="">
+                                {selectedCourseId 
+                                    ? (eligibleStudents.length === 0 ? "No hay estudiantes elegibles" : "Seleccione un estudiante...") 
+                                    : "Primero seleccione un curso"}
+                            </option>
+                            {eligibleStudents.map(student => (
+                                <option key={student.id} value={student.id}>
+                                    {student.documentNumber} - {student.user?.firstName} {student.user?.paternalSurname} {student.user?.maternalSurname}
+                                </option>
+                            ))}
+                        </select>
+                        {selectedCourseId && eligibleStudents.length === 0 && (
+                            <p className="text-sm text-red-500 mt-1">
+                                No se encontraron estudiantes que cumplan con el prerrequisito para este curso o que no estén ya matriculados.
+                            </p>
+                        )}
                     </div>
                 </section>
 

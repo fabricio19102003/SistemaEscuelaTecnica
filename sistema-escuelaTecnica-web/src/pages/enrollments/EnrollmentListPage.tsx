@@ -8,6 +8,7 @@ import Swal from 'sweetalert2';
 import { PDFViewer } from '@react-pdf/renderer';
 import EnrollmentPDF from '../../components/enrollment/EnrollmentPDF';
 import EnrollmentListPDF from '../../components/enrollment/EnrollmentListPDF';
+import AutoPromotionModal from '../../components/enrollment/AutoPromotionModal';
 
 const EnrollmentListPage = () => {
     const { enrollments, fetchEnrollments, fetchEnrollmentById, selectedEnrollment, deleteEnrollment, isLoading, fetchEnrollmentReport } = useEnrollmentStore();
@@ -29,6 +30,7 @@ const EnrollmentListPage = () => {
     const [reportData, setReportData] = useState<any[]>([]);
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [clientIp, setClientIp] = useState('Cargando...');
+    const [showAutoPromoteModal, setShowAutoPromoteModal] = useState(false);
 
     useEffect(() => {
         fetchEnrollments();
@@ -141,6 +143,19 @@ const EnrollmentListPage = () => {
 
     return (
         <div className="space-y-6">
+            {showAutoPromoteModal && (
+                <AutoPromotionModal 
+                    onClose={() => setShowAutoPromoteModal(false)}
+                    onSuccess={() => {
+                        fetchEnrollments();
+                        Swal.fire({
+                            title: 'Proceso Finalizado',
+                            text: 'La promoción automática ha concluido.',
+                            icon: 'success'
+                        });
+                    }}
+                />
+            )}
              {/* Report Modal */}
              {showReportModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -228,6 +243,16 @@ const EnrollmentListPage = () => {
                                 <FileSpreadsheet size={20} />
                             )}
                             <span>Exportar Lista</span>
+                        </button>
+
+                        <button
+                            onClick={() => setShowAutoPromoteModal(true)}
+                            className="flex-1 lg:flex-none justify-center flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-md transition-all"
+                        >
+                            <div className="w-5 h-5 flex items-center justify-center border-2 border-white rounded-full">
+                                <span className="text-[10px] font-bold">A</span>
+                            </div>
+                            <span>Promoción Auto.</span>
                         </button>
                         <button
                             onClick={() => navigate('/dashboard/enrollments/new')}

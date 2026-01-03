@@ -3,7 +3,7 @@ import { Outlet, useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 
 import { useNotificationStore } from '../store/notification.store';
-import { LogOut, User, Menu, LayoutDashboard, Bell } from 'lucide-react';
+import { LogOut, User, Menu, LayoutDashboard, Bell, FileText } from 'lucide-react';
 import { NotificationBell } from '../components/layout/NotificationBell';
 import logo from '../assets/logo_school.png';
 import Swal from 'sweetalert2';
@@ -24,7 +24,7 @@ const StudentLayout = () => {
     const navItems = [
         { path: '/student/portal', label: 'Panel Principal', icon: LayoutDashboard, exact: true },
         { path: '/student/notifications', label: 'Notificaciones', icon: Bell, exact: true, badge: unreadCount },
-        // { path: '/student/history', label: 'Historial Académico', icon: FileText, exact: true }, // Future implementation
+        { path: '/student/history', label: 'Cursos Finalizados', icon: FileText, exact: true },
     ];
 
     useEffect(() => {

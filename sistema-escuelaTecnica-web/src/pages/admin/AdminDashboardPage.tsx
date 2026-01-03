@@ -8,11 +8,61 @@ import {
     BookOpen, 
     School, 
     FileText, 
-    LayoutDashboard 
+    LayoutDashboard,
+    AlertCircle,
+    CheckCircle
 } from 'lucide-react';
+import { getGroups, closeGroup } from '../../services/group.service';
+import Swal from 'sweetalert2';
 
 const AdminDashboardPage: React.FC = () => {
     const navigate = useNavigate();
+
+    const [pendingGroups, setPendingGroups] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        fetchPendingGroups();
+    }, []);
+
+    const fetchPendingGroups = async () => {
+        try {
+            const allGroups = await getGroups();
+            const pending = allGroups.filter(g => g.status === 'GRADES_SUBMITTED');
+            setPendingGroups(pending);
+        } catch (error) {
+            console.error('Error fetching groups', error);
+        }
+    };
+
+    const handleCloseGroup = async (group: any) => {
+        const result = await Swal.fire({
+            title: '¿Cerrar Curso?',
+            text: `Vas a cerrar el curso ${group.name} (${group.code}). Esto cambiará el estado de los estudiantes a COMPLETADO. ¿Deseas continuar?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#004694',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, cerrar curso',
+            cancelButtonText: 'Cancelar',
+            background: '#1f2937', color: '#fff'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await closeGroup(group.id);
+                fetchPendingGroups(); // Refresh list
+                Swal.fire({
+                    title: 'Curso Cerrado',
+                    text: 'El curso se ha cerrado correctamente.',
+                    icon: 'success',
+                    background: '#1f2937', color: '#fff'
+                });
+            } catch (error) {
+                console.error('Error closing group', error);
+                Swal.fire('Error', 'No se pudo cerrar el curso', 'error');
+            }
+        }
+    };
 
     return (
         <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -37,6 +87,38 @@ const AdminDashboardPage: React.FC = () => {
                 <div className="absolute bottom-0 right-20 -mb-10 w-40 h-40 bg-blue-400/20 rounded-full blur-2xl"></div>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-b from-transparent to-black/5 opacity-50"></div>
             </div>
+
+            {/* Pending Closures Alert Section */}
+            {pendingGroups.length > 0 && (
+                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 animate-in fade-in duration-500">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                            <AlertCircle size={24} />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900">Cursos Listos para Cerrar</h2>
+                        <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-amber-200">
+                            {pendingGroups.length} Pendientes
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {pendingGroups.map((group) => (
+                            <div key={group.id} className="bg-white p-4 rounded-xl border border-amber-100 shadow-sm flex flex-col justify-between gap-3">
+                                <div>
+                                    <h4 className="font-bold text-[#004694]">{group.name}</h4>
+                                    <p className="text-sm text-gray-500 font-mono mb-1">{group.code}</p>
+                                    <p className="text-sm text-gray-600">Docente: <span className="font-medium">{group.teacher?.user?.firstName || 'Unknown'} {group.teacher?.user?.paternalSurname || ''}</span></p>
+                                </div>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); handleCloseGroup(group); }}
+                                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <CheckCircle size={16} /> Cerrar Curso
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Quick Access Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

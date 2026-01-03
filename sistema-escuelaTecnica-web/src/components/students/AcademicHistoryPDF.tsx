@@ -2,7 +2,7 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
 import type { Student, AcademicHistoryRecord } from '../../types/student.types';
-import logoUap from '../../assets/images/logo_uap_official.png';
+
 
 // Register fonts (Standard Helvetica is safer)
 // Font.register({ family: 'Open Sans', ... });
@@ -190,12 +190,14 @@ export const AcademicHistoryPDF: React.FC<AcademicHistoryPDFProps> = ({ student,
     const currentDate = new Date().toLocaleDateString('es-ES');
     const currentTime = new Date().toLocaleTimeString('es-ES');
 
+    const logoUapUrl = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}/images/logo_uap.png` : '';
+
     return (
         <Document>
             <Page size="A4" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Image src={logoUap} style={styles.logo} />
+                    <Image src={logoUapUrl} style={styles.logo} />
                     <View style={styles.headerTextContainer}>
                         <Text style={styles.universityName}>UNIVERSIDAD AMAZÓNICA DE PANDO</Text>
                         <Text style={styles.subHeader}>VICERRECTORADO</Text>
@@ -248,7 +250,7 @@ export const AcademicHistoryPDF: React.FC<AcademicHistoryPDFProps> = ({ student,
                             <Text style={[styles.tableCell, styles.colAsignatura]}>{record.courseName ? String(record.courseName) : '-'}</Text>
                             <Text style={[styles.tableCell, styles.colNivel]}>{record.levelName ? String(record.levelName) : '-'}</Text>
                             <Text style={[styles.tableCellBold, styles.colNota]}>
-                                {record.finalGrade !== null && record.finalGrade !== undefined ? Number(record.finalGrade).toFixed(2) : '-'}
+                                {record.finalGrade !== null && record.finalGrade !== undefined ? Number(record.finalGrade).toFixed(0) : '-'}
                             </Text>
                             <Text style={[styles.tableCell, styles.colEstado]}>
                                 {record.status ? (record.status === 'ACTIVE' ? 'CURSANDO' : String(record.status).toUpperCase()) : '-'}
@@ -256,13 +258,13 @@ export const AcademicHistoryPDF: React.FC<AcademicHistoryPDFProps> = ({ student,
                         </View>
                     ))}
                     
-                    {history.length === 0 && (
+                    {history.length === 0 ? (
                         <View style={styles.tableRow}>
                             <Text style={[styles.tableCell, { width: '100%', textAlign: 'center', padding: 10, borderRightWidth: 0 }]}>
                                 No hay registros académicos disponibles.
                             </Text>
                         </View>
-                    )}
+                    ) : null}
                 </View>
 
                 {/* Signatures */}

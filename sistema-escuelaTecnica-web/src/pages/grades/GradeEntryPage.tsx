@@ -132,7 +132,19 @@ const GradeEntryPage = () => {
             setGeneratingPdf(true);
             const { data } = await axios.get(`/grades/report-card/${enrollment.id}`);
             
-            const blob = await pdf(<ReportCardPDF data={data} />).toBlob();
+            const blob = await pdf(
+                <ReportCardPDF 
+                    data={data} 
+                    period={data.period}
+                    courseName={data.courseName}
+                    teacherName={data.teacherName}
+                    studentName={data.studentName}
+                    scheduleTime={data.schedule}
+                    nextCourse={data.nextCourse}
+                    userWhoGenerated="DOCENTE" // Since it's grade entry page
+                    clientIp="N/A"
+                />
+            ).toBlob();
             
             const u = enrollment.student.user;
             const fullName = `${u.firstName}_${u.paternalSurname}`.toUpperCase();

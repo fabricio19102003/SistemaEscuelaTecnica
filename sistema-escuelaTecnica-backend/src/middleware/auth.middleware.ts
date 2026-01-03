@@ -26,7 +26,7 @@ export const authenticateJWT = (req: AuthRequest, res: Response, next: NextFunct
             req.user = decoded;
             next();
         } else {
-            res.sendStatus(403);
+            res.sendStatus(401);
         }
     } else {
         res.sendStatus(401);
