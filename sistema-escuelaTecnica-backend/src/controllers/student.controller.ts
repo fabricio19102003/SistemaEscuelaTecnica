@@ -806,6 +806,8 @@ export const getMyAcademicHistory = async (req: Request, res: Response) => {
     }
 };
 
+// getMyAttendance function removed - use StudentPortalController instead
+
 export const getEligibleStudents = async (req: Request, res: Response) => {
     const { courseId } = req.query;
 

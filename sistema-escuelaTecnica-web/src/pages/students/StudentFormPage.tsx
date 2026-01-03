@@ -28,16 +28,16 @@ const studentSchema = z.object({
     medicalNotes: z.string().optional(),
     enrollmentStatus: z.enum(['ACTIVE', 'INACTIVE', 'GRADUATED', 'DROPPED', 'RETIRADO', 'ABANDONO', 'NO_INCORPORADO']),
 
-    // Guardian
+    // Guardian - Now Optional
     guardian: z.object({
-        firstName: z.string().min(2, 'Nombre requerido'),
-        paternalSurname: z.string().min(2, 'Apellido paterno requerido'),
+        firstName: z.string().optional(),
+        paternalSurname: z.string().optional(),
         maternalSurname: z.string().optional(),
-        email: z.string().email('Email requerido'),
-        phone: z.string().min(6, 'Teléfono requerido'),
-        documentType: z.string(),
-        documentNumber: z.string().min(5, 'CI requerido'),
-        relationship: z.enum(['FATHER', 'MOTHER', 'TUTOR', 'OTHER']),
+        email: z.string().email('Debe ser un email válido').optional().or(z.literal('')),
+        phone: z.string().optional(),
+        documentType: z.string().optional(),
+        documentNumber: z.string().optional(),
+        relationship: z.enum(['FATHER', 'MOTHER', 'TUTOR', 'OTHER']).optional(),
         occupation: z.string().optional(),
         workplace: z.string().optional(),
     }).optional(),
@@ -137,8 +137,6 @@ const StudentFormPage = () => {
     const onSubmit: SubmitHandler<StudentForm> = async (data) => {
         console.log('========== FRONTEND: onSubmit called ==========');
         console.log('Form data received:', data);
-        console.log('Is Edit Mode:', isEditMode, 'ID:', id);
-        console.log('Has guardian in form?', !!data.guardian);
         
         try {
             // Map frontend enum values to backend Prisma enum values
@@ -151,6 +149,15 @@ const StudentFormPage = () => {
                 const mapping: Record<string, string> = { 'CI': 'DNI', 'PASSPORT': 'PASSPORT', 'OTHER': 'OTHER' };
                 return mapping[docType] || 'DNI';
             };
+
+            // Check if guardian data effectively exists
+            let guardianData = undefined;
+            if (data.guardian && data.guardian.firstName && data.guardian.paternalSurname && data.guardian.documentNumber) {
+                guardianData = {
+                    ...data.guardian,
+                    documentType: mapDocumentType(data.guardian.documentType || 'CI')
+                };
+            }
 
             // Transform frontend data to backend expected format
             const payload = {
@@ -172,18 +179,10 @@ const StudentFormPage = () => {
                 medicalNotes: data.medicalNotes,
                 
                 // Guardian data
-                guardian: data.guardian ? {
-                    ...data.guardian,
-                    documentType: mapDocumentType(data.guardian.documentType)
-                } : undefined
+                guardian: guardianData
             };
 
             console.log('Payload prepared:', payload);
-            console.log('Payload has guardian?', !!payload.guardian);
-            if (payload.guardian) {
-                console.log('Guardian email:', payload.guardian.email);
-                console.log('Guardian name:', payload.guardian.firstName, payload.guardian.paternalSurname);
-            }
 
             // Create FormData for upload
             const formData = new FormData();
@@ -191,19 +190,13 @@ const StudentFormPage = () => {
             // Append payload as JSON string
             formData.append('data', JSON.stringify(payload));
             
-            console.log('FormData created, JSON payload appended');
-            
             // Append photo if selected
             if (photoFile) {
                 formData.append('photo', photoFile);
-                console.log('Photo file appended to FormData');
             }
 
             if (isEditMode && id) {
-                console.log('Calling updateStudent with id:', id);
-                // Now using FormData for update as well
                 await updateStudent(id, formData); 
-                console.log('updateStudent completed successfully');
                 Swal.fire({
                     title: '¡Actualizado!',
                     text: 'El estudiante ha sido actualizado correctamente.',
@@ -212,10 +205,7 @@ const StudentFormPage = () => {
                     color: '#fff'
                 });
             } else {
-               console.log('Calling createStudent');
-               // For create, we use FormData
                await createStudent(formData);
-               console.log('createStudent completed successfully');
                Swal.fire({
                     title: '¡Registrado!',
                     text: 'El estudiante ha sido registrado correctamente.',
@@ -226,10 +216,7 @@ const StudentFormPage = () => {
             }
             navigate('/dashboard/students');
         } catch (error: any) {
-            console.error('========== ERROR in onSubmit ==========');
             console.error('Error submitting form:', error);
-            console.error('Error message:', error.message);
-            console.error('Error response:', error.response?.data);
             Swal.fire({
                 title: 'Error',
                 text: error.message || 'Hubo un error al guardar el estudiante.',
@@ -271,8 +258,6 @@ const StudentFormPage = () => {
 
             <form onSubmit={handleSubmit(onSubmit as any, (errors) => {
                 console.error('Validation Errors:', errors);
-                
-                // Helper to format errors recursively
                 const formatErrors = (errObj: any, prefix = ''): string[] => {
                     let messages: string[] = [];
                     for (const key in errObj) {
@@ -284,9 +269,7 @@ const StudentFormPage = () => {
                     }
                     return messages;
                 };
-
                 const errorMessages = formatErrors(errors);
-
                 Swal.fire({
                     title: 'Error de Validación',
                     html: `<div class="text-left text-sm max-h-60 overflow-y-auto">
@@ -361,7 +344,7 @@ const StudentFormPage = () => {
                                 {errors.documentNumber && <p className="text-red-400 text-xs">{errors.documentNumber.message}</p>}
                             </div>
 
-                             <div className="space-y-2">
+                            <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-300">Fecha de Nacimiento *</label>
                                 <input type="date" {...register('birthDate')} className="glass-input w-full [color-scheme:dark]" />
                                 {errors.birthDate && <p className="text-red-400 text-xs">{errors.birthDate.message}</p>}
@@ -422,7 +405,7 @@ const StudentFormPage = () => {
                 <section className="bg-white border border-blue-100 rounded-2xl p-6 shadow-lg shadow-blue-900/5 relative z-10">
                     <div className="flex items-center gap-3 mb-6 border-b border-blue-50 pb-4">
                         <div className="p-2 bg-blue-50 rounded-lg text-[#004694]"><p className="font-bold text-lg px-1">T</p></div>
-                        <h2 className="text-xl font-bold text-[#004694]">Datos del Tutor / Apoderado</h2>
+                        <h2 className="text-xl font-bold text-[#004694]">Datos del Tutor / Apoderado (Opcional)</h2>
                     </div>
                     
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6 flex items-start gap-3">
@@ -434,12 +417,12 @@ const StudentFormPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                             <label className="text-sm font-medium text-gray-300">Nombres del Tutor *</label>
+                             <label className="text-sm font-medium text-gray-300">Nombres del Tutor</label>
                             <input {...register('guardian.firstName')} className="glass-input w-full uppercase" onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()} placeholder="CARLOS" />
                             {errors.guardian?.firstName && <p className="text-red-400 text-xs">{errors.guardian.firstName.message}</p>}
                         </div>
                          <div className="space-y-2">
-                             <label className="text-sm font-medium text-gray-300">Apellido Paterno *</label>
+                             <label className="text-sm font-medium text-gray-300">Apellido Paterno</label>
                             <input {...register('guardian.paternalSurname')} className="glass-input w-full uppercase" onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()} placeholder="PÉREZ" />
                              {errors.guardian?.paternalSurname && <p className="text-red-400 text-xs">{errors.guardian.paternalSurname.message}</p>}
                         </div>
@@ -448,7 +431,7 @@ const StudentFormPage = () => {
                             <input {...register('guardian.maternalSurname')} className="glass-input w-full uppercase" onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()} placeholder="GÓMEZ" />
                         </div>
                         <div className="space-y-2">
-                             <label className="text-sm font-medium text-gray-300">Relación *</label>
+                             <label className="text-sm font-medium text-gray-300">Relación</label>
                              <select {...register('guardian.relationship')} className="glass-input w-full">
                                 <option value="FATHER">Padre</option>
                                 <option value="MOTHER">Madre</option>
@@ -457,17 +440,17 @@ const StudentFormPage = () => {
                             </select>
                         </div>
                          <div className="space-y-2">
-                             <label className="text-sm font-medium text-gray-300">CI del Tutor *</label>
+                             <label className="text-sm font-medium text-gray-300">CI del Tutor</label>
                             <input {...register('guardian.documentNumber')} className="glass-input w-full uppercase" onInput={(e) => e.currentTarget.value = e.currentTarget.value.toUpperCase()} placeholder="8765432" />
                              {errors.guardian?.documentNumber && <p className="text-red-400 text-xs">{errors.guardian.documentNumber.message}</p>}
                         </div>
                          <div className="space-y-2">
-                             <label className="text-sm font-medium text-gray-300">Teléfono / Celular *</label>
+                             <label className="text-sm font-medium text-gray-300">Teléfono / Celular</label>
                             <input {...register('guardian.phone')} className="glass-input w-full" placeholder="70099999" />
                              {errors.guardian?.phone && <p className="text-red-400 text-xs">{errors.guardian.phone.message}</p>}
                         </div>
                          <div className="space-y-2 md:col-span-2">
-                             <label className="text-sm font-medium text-gray-300">Email del Tutor *</label>
+                             <label className="text-sm font-medium text-gray-300">Email del Tutor</label>
                             <input {...register('guardian.email')} className="glass-input w-full" placeholder="padre@email.com" />
                              {errors.guardian?.email && <p className="text-red-400 text-xs">{errors.guardian.email.message}</p>}
                         </div>
